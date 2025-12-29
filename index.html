@@ -922,9 +922,8 @@ async function syncAll(){
     const { apiGet } = getApi();
 
     // Достаём данные “пачкой” (можно расширить)
-    const now = new Date();
-    const yearFrom = fmtDate(startOfYear(now));
-    const yearTo = fmtDate(endOfYear(now));
+const yearFrom = "2025-01-01";
+const yearTo   = "2026-12-31";
 
     const [txResp, goalsResp] = await Promise.all([
       apiGet("listTransactions", { from: yearFrom, to: yearTo }),
@@ -1579,6 +1578,10 @@ initDashHandlers();
 
 // Автосинк при старте (мягко)
 setStatus("готово к синхронизации", true);
+
+window.addEventListener("load", () => {
+  syncAll();
+});
 </script>
 </body>
 </html>
