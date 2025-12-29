@@ -2,28 +2,22 @@
 const API_URL = "https://rough-breeze-5ac6.chatgptnik.workers.dev/";
 const API_KEY = "fin2026_9fA3xK2Qm7R8vW5LZB0eC1D4YH6uR";
 
-(async () => {
-  try {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({
-        key: API_KEY,
-        action: "addTransaction",
-        date: "2026-01-02",
-        type: "expense",
-        category: "Еда",
-        subcategory: "продукты",
-        amount: 500,
-        note: "тест"
-      })
-    });
-
-    console.log("HTTP status:", res.status);
-    const json = await res.json();
-    console.log("Response JSON:", json);
-  } catch (e) {
-    console.error("Fetch error:", e);
-  }
+(async ()=>{
+  const res = await fetch(API_URL, {
+    method:"POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({
+      key: API_KEY,
+      action: "addTransaction",
+      date: "2026-01-02",
+      type: "expense",
+      category: "Еда",
+      subcategory: "продукты",
+      amount: 500,
+      note: "тест"
+    })
+  });
+  console.log("HTTP", res.status);
+  console.log(await res.text());
 })();
 </script>
