@@ -1,23 +1,1584 @@
-<script>
-const API_URL = "https://rough-breeze-5ac6.chatgptnik.workers.dev/";
-const API_KEY = "fin2026_9fA3xK2Qm7R8vW5LZB0eC1D4YH6uR";
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Finance OS — Пульт и Дашборд</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg:#0b0f17;
+      --card:#111827;
+      --card2:#0f172a;
+      --text:#e5e7eb;
+      --muted:#9ca3af;
+      --line:#243041;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --accent:#60a5fa;
+      --accent2:#a78bfa;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 20% 0%, rgba(96,165,250,.16), transparent 55%),
+                  radial-gradient(1200px 800px at 80% 10%, rgba(167,139,250,.14), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    a{color:var(--accent); text-decoration:none}
+    .wrap{max-width:1200px; margin:0 auto; padding:20px}
+    header{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      padding:14px 16px; border:1px solid var(--line); border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(17,24,39,.92), rgba(17,24,39,.72));
+      box-shadow: var(--shadow);
+      position:sticky; top:12px; z-index:10;
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex; gap:12px; align-items:center}
+    .logo{
+      width:38px;height:38px;border-radius:12px;
+      background: conic-gradient(from 160deg, var(--accent), var(--accent2), var(--accent));
+      box-shadow: 0 10px 30px rgba(96,165,250,.25);
+    }
+    .title{display:flex; flex-direction:column; gap:2px}
+    .title b{font-size:15px}
+    .title span{font-size:12px;color:var(--muted)}
+    .tabs{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .tab{
+      padding:10px 12px; border:1px solid var(--line); border-radius: 12px;
+      background: rgba(15,23,42,.65); color:var(--text);
+      cursor:pointer; user-select:none;
+    }
+    .tab.active{border-color: rgba(96,165,250,.7); box-shadow: 0 0 0 3px rgba(96,165,250,.15)}
+    .rightbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .pill{
+      font-size:12px; color:var(--muted);
+      border:1px solid var(--line); border-radius: 999px; padding:8px 10px;
+      background: rgba(15,23,42,.55);
+    }
+    .btn{
+      padding:10px 12px; border:1px solid rgba(96,165,250,.45); border-radius: 12px;
+      background: rgba(96,165,250,.12); color:var(--text);
+      cursor:pointer;
+    }
+    .btn:hover{background: rgba(96,165,250,.18)}
+    .btn:disabled{opacity:.55; cursor:not-allowed}
+    .grid{
+      display:grid; gap:14px; margin-top:14px;
+    }
+    .grid.cols-2{grid-template-columns: 1.1fr .9fr}
+    .grid.cols-3{grid-template-columns: 1fr 1fr 1fr}
+    @media (max-width: 980px){
+      .grid.cols-2,.grid.cols-3{grid-template-columns:1fr}
+      header{position:static}
+    }
+    .card{
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(17,24,39,.92), rgba(17,24,39,.72));
+      box-shadow: var(--shadow);
+      padding:14px;
+      overflow:hidden;
+    }
+    .card h3{
+      margin:0 0 10px; font-size:14px; color: #f3f4f6; letter-spacing:.2px
+    }
+    .muted{color:var(--muted)}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .field{display:flex; flex-direction:column; gap:6px; min-width: 160px; flex: 1}
+    label{font-size:12px; color:var(--muted)}
+    input, select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border:1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(15,23,42,.55);
+      color:var(--text);
+      outline:none;
+    }
+    textarea{min-height:42px; resize:vertical}
+    input:focus,select:focus,textarea:focus{border-color: rgba(96,165,250,.6); box-shadow: 0 0 0 3px rgba(96,165,250,.12)}
+    .kpis{display:grid; grid-template-columns: repeat(4,1fr); gap:10px}
+    @media (max-width: 980px){.kpis{grid-template-columns: repeat(2,1fr)}}
+    .kpi{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(15,23,42,.55);
+      padding:12px;
+    }
+    .kpi .label{font-size:12px;color:var(--muted)}
+    .kpi .value{font-size:18px;margin-top:4px}
+    .kpi .delta{font-size:12px;margin-top:6px}
+    .delta.good{color:var(--good)}
+    .delta.bad{color:var(--bad)}
+    .delta.neu{color:var(--muted)}
+    .table{
+      width:100%; border-collapse: collapse; overflow:auto;
+      border:1px solid var(--line); border-radius: 14px;
+      background: rgba(15,23,42,.35);
+    }
+    .table th,.table td{
+      padding:10px 10px; border-bottom:1px solid rgba(36,48,65,.7);
+      font-size:13px; text-align:left;
+    }
+    .table th{font-size:12px; color:var(--muted); font-weight:600; background: rgba(15,23,42,.6)}
+    .badge{
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:12px; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--line); background: rgba(15,23,42,.55)
+    }
+    .dot{width:8px;height:8px;border-radius:999px;background:var(--muted)}
+    .dot.good{background:var(--good)}
+    .dot.warn{background:var(--warn)}
+    .dot.bad{background:var(--bad)}
+    .progress{
+      width:100%; height:10px; border-radius: 999px;
+      background: rgba(36,48,65,.8); overflow:hidden;
+    }
+    .progress > div{height:100%; width:0%; background: linear-gradient(90deg, var(--accent), var(--accent2))}
+    .goal{
+      border:1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(15,23,42,.55);
+      padding:12px;
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .goalTop{display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap}
+    .goalName{font-weight:700}
+    .goalMeta{font-size:12px;color:var(--muted)}
+    .goalActions{display:flex; gap:8px; flex-wrap:wrap}
+    .miniBtn{
+      padding:8px 10px; border-radius: 12px;
+      border:1px solid rgba(96,165,250,.45); background: rgba(96,165,250,.12);
+      color:var(--text); cursor:pointer; font-size:12px;
+    }
+    .miniBtn:hover{background: rgba(96,165,250,.18)}
+    .split{
+      display:grid; grid-template-columns: 1fr 1fr; gap:12px;
+    }
+    @media (max-width: 980px){.split{grid-template-columns: 1fr}}
+    .hint{
+      font-size:12px; color:var(--muted);
+      border-left: 3px solid rgba(96,165,250,.55);
+      padding: 8px 10px; background: rgba(15,23,42,.35); border-radius: 12px;
+    }
+    .danger{
+      border-left-color: rgba(239,68,68,.7);
+    }
+    .ok{
+      border-left-color: rgba(34,197,94,.7);
+    }
+    .hidden{display:none !important}
+    .footerNote{margin-top:14px; font-size:12px; color:var(--muted)}
+    .small{font-size:12px}
+  </style>
+</head>
 
-(async ()=>{
-  const res = await fetch(API_URL, {
-    method:"POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({
-      key: API_KEY,
-      action: "addTransaction",
-      date: "2026-01-02",
-      type: "expense",
-      category: "Еда",
-      subcategory: "продукты",
-      amount: 500,
-      note: "тест"
-    })
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo"></div>
+      <div class="title">
+        <b>Finance OS</b>
+        <span>Пульт · Дашборд · Цели · Мотивация</span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="pult">Раздел 1 · Пульт</div>
+      <div class="tab" data-tab="dash">Раздел 2 · Дашборд</div>
+      <div class="tab" data-tab="settings">Настройки</div>
+    </div>
+
+    <div class="rightbar">
+      <div class="pill" id="pillStatus">Статус: <span class="muted" id="statusText">не синхронизировано</span></div>
+      <button class="btn" id="btnSync">Синхронизировать</button>
+    </div>
+  </header>
+
+  <!-- ===================== PULT ===================== -->
+  <section id="tab-pult">
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Еженедельный ввод</h3>
+
+        <div class="row">
+          <div class="field" style="min-width:160px;flex:0.7">
+            <label>Дата</label>
+            <input type="date" id="txDate" />
+          </div>
+
+          <div class="field" style="min-width:160px;flex:0.7">
+            <label>Тип</label>
+            <select id="txType">
+              <option value="expense">Расход</option>
+              <option value="income">Доход</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Категория</label>
+            <select id="txCategory"></select>
+          </div>
+
+          <div class="field">
+            <label>Подкатегория (опционально)</label>
+            <input id="txSubcategory" placeholder="например: продукты / такси / проект..." />
+          </div>
+
+          <div class="field" style="min-width:160px;flex:0.6">
+            <label>Сумма</label>
+            <input id="txAmount" type="number" min="0" step="1" placeholder="₽" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="field" style="flex:1.8">
+            <label>Комментарий</label>
+            <input id="txNote" placeholder="коротко: что это было" />
+          </div>
+          <div class="field" style="flex:0.6; min-width: 220px">
+            <label>&nbsp;</label>
+            <button class="btn" id="btnAddTx">Добавить операцию</button>
+          </div>
+        </div>
+
+        <div class="hint" style="margin-top:12px">
+          Подсказка: это “фронт” для Google Sheets через Worker + Apps Script.
+          Если ты уже перенёс ключ в Worker ENV — оставь <span class="muted">API_KEY</span> пустым в настройках.
+        </div>
+
+        <div style="margin-top:12px" class="split">
+          <div class="card" style="padding:12px; background: rgba(15,23,42,.55); box-shadow:none">
+            <h3 style="margin-bottom:8px">Текущая неделя</h3>
+            <div class="kpis" style="grid-template-columns: repeat(3,1fr)">
+              <div class="kpi">
+                <div class="label">Доход</div>
+                <div class="value" id="wkIncome">—</div>
+              </div>
+              <div class="kpi">
+                <div class="label">Расход</div>
+                <div class="value" id="wkExpense">—</div>
+              </div>
+              <div class="kpi">
+                <div class="label">Баланс</div>
+                <div class="value" id="wkNet">—</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card" style="padding:12px; background: rgba(15,23,42,.55); box-shadow:none">
+            <h3 style="margin-bottom:8px">Правило “можно/нельзя тратить”</h3>
+            <div id="spendRuleBox" class="hint">Синхронизируй данные, чтобы увидеть ограничения по бюджету.</div>
+          </div>
+        </div>
+
+        <div style="margin-top:12px; overflow:auto">
+          <table class="table" id="weekTable">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Тип</th>
+                <th>Категория</th>
+                <th>Сумма</th>
+                <th>Комментарий</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="footerNote">
+          Если после добавления операции она не появилась — нажми “Синхронизировать”.
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Цели + мотивация</h3>
+
+        <div class="split">
+          <div>
+            <div class="row" style="justify-content:space-between; margin-bottom:10px">
+              <div class="badge"><span class="dot"></span> Цели из Google Sheets</div>
+              <span class="small muted" id="goalsCount">—</span>
+            </div>
+
+            <div id="goalsList" style="display:flex; flex-direction:column; gap:10px"></div>
+
+            <div class="footerNote">
+              Цели редактируются в таблице (лист <b>Goals</b>) или через кнопки “+10k / +25k / +50k”.
+            </div>
+          </div>
+
+          <div>
+            <div class="row" style="justify-content:space-between; margin-bottom:10px">
+              <div class="badge"><span class="dot"></span> Мотивационная шкала</div>
+              <span class="small muted" id="motivationHint">—</span>
+            </div>
+
+            <div class="goal">
+              <div class="goalTop">
+                <div>
+                  <div class="goalName">Уровни дохода (в месяц)</div>
+                  <div class="goalMeta">Сделаем так, чтобы 180к был “побочным эффектом”</div>
+                </div>
+              </div>
+              <div id="ladder" style="display:flex; flex-direction:column; gap:10px"></div>
+              <div class="hint ok" id="motivationBox">Синхронизируй данные, чтобы увидеть текущий уровень.</div>
+            </div>
+
+            <div class="goal">
+              <div class="goalTop">
+                <div>
+                  <div class="goalName">План накоплений на ключевые события</div>
+                  <div class="goalMeta">Сколько откладывать ежемесячно (простая оценка)</div>
+                </div>
+              </div>
+              <div id="savingsPlan" class="hint">Синхронизируй данные, чтобы оценить доступный “зазор”.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <section id="tab-dash" class="hidden">
+    <div class="card">
+      <h3>Фильтры периода</h3>
+      <div class="row">
+        <div class="field" style="min-width:210px; flex:0.9">
+          <label>Период</label>
+          <select id="periodType">
+            <option value="week">Неделя</option>
+            <option value="month" selected>Месяц</option>
+            <option value="quarter">Квартал</option>
+            <option value="year">Год</option>
+            <option value="custom">Произвольный</option>
+          </select>
+        </div>
+
+        <div class="field" style="min-width:210px; flex:0.9">
+          <label>Опорная дата</label>
+          <input type="date" id="anchorDate" />
+        </div>
+
+        <div class="field" style="min-width:210px; flex:0.9" id="customFromWrap" class="hidden">
+          <label>От</label>
+          <input type="date" id="customFrom" />
+        </div>
+
+        <div class="field" style="min-width:210px; flex:0.9" id="customToWrap" class="hidden">
+          <label>До</label>
+          <input type="date" id="customTo" />
+        </div>
+
+        <div class="field" style="min-width:210px; flex:0.6">
+          <label>Сравнить с предыдущим периодом</label>
+          <select id="compareMode">
+            <option value="on" selected>Да</option>
+            <option value="off">Нет</option>
+          </select>
+        </div>
+
+        <div class="field" style="min-width:220px; flex:0.6">
+          <label>&nbsp;</label>
+          <button class="btn" id="btnApply">Применить</button>
+        </div>
+      </div>
+
+      <div class="kpis" style="margin-top:12px">
+        <div class="kpi">
+          <div class="label">Доход (период)</div>
+          <div class="value" id="kIncome">—</div>
+          <div class="delta neu" id="dIncome">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Расход (период)</div>
+          <div class="value" id="kExpense">—</div>
+          <div class="delta neu" id="dExpense">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Баланс</div>
+          <div class="value" id="kNet">—</div>
+          <div class="delta neu" id="dNet">—</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Норма накоплений</div>
+          <div class="value" id="kSaveRate">—</div>
+          <div class="delta neu" id="dSaveRate">—</div>
+        </div>
+      </div>
+
+      <div class="hint" style="margin-top:12px" id="forecastBox">Синхронизируй данные, чтобы увидеть прогноз.</div>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Динамика доходов и расходов</h3>
+        <canvas id="chartFlow" height="130"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>Баланс (доход − расход)</h3>
+        <canvas id="chartNet" height="130"></canvas>
+      </div>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Структура расходов (период)</h3>
+        <canvas id="pieExpense" height="160"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>Структура доходов (период)</h3>
+        <canvas id="pieIncome" height="160"></canvas>
+      </div>
+    </div>
+
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>Лимиты по категориям (месяц)</h3>
+        <div class="hint">Лимиты храним локально в браузере (localStorage). Если нужно — добавим эндпоинты в Apps Script для хранения в Google Sheets.</div>
+        <div style="margin-top:10px; overflow:auto">
+          <table class="table" id="budgetTable">
+            <thead>
+              <tr>
+                <th>Категория</th>
+                <th>Лимит/мес</th>
+                <th>Потрачено</th>
+                <th>Осталось</th>
+                <th>Статус</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="btnEditBudgets">Редактировать лимиты</button>
+          <button class="btn" id="btnResetBudgets">Сбросить лимиты</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Топ категорий (период)</h3>
+        <div id="topCats" class="hint">Синхронизируй данные, чтобы увидеть топ.</div>
+
+        <h3 style="margin-top:14px">Период-таблица</h3>
+        <div style="overflow:auto">
+          <table class="table" id="periodTable">
+            <thead>
+              <tr>
+                <th>Дата</th>
+                <th>Тип</th>
+                <th>Категория</th>
+                <th>Сумма</th>
+                <th>Комментарий</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="footerNote">
+          Сравнение: “аналогичный предыдущий период” — это такой же по длине отрезок непосредственно перед текущим.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SETTINGS ===================== -->
+  <section id="tab-settings" class="hidden">
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>API-настройки</h3>
+        <div class="hint danger">
+          Если API_KEY уже хранится в Cloudflare Worker (env/API_KEY), то оставь поле API_KEY пустым.
+          <br/>Если ключ нужен на клиенте (временно) — он будет виден пользователю страницы.
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <div class="field">
+            <label>API_URL (Cloudflare Worker)</label>
+            <input id="cfgApiUrl" placeholder="https://xxxx.workers.dev/" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <label>API_KEY (опционально)</label>
+            <input id="cfgApiKey" placeholder="оставь пустым, если ключ в Worker ENV" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <button class="btn" id="btnSaveCfg">Сохранить</button>
+          <button class="btn" id="btnTestCfg">Тест соединения</button>
+        </div>
+
+        <div class="footerNote">
+          Конфиг хранится локально в браузере. Если нужно — добавим логин и хранение профиля.
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Категории по умолчанию</h3>
+        <div class="hint">Ты можешь добавлять новые категории просто в выпадающий список (в коде). Для “профессионального” режима — вынесем в Google Sheets и будем читать конфиг оттуда.</div>
+        <pre class="hint" style="white-space:pre-wrap" id="catsPreview"></pre>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <h3>Редактор лимитов</h3>
+      <div class="hint">Лимиты используются для правила “можно/нельзя тратить” и для таблицы бюджетов.</div>
+      <div id="budgetsEditor"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="btnSaveBudgets">Сохранить лимиты</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="footerNote">
+    Версия: <span class="muted">MVP 1.0</span> · Данные операций/целей — Google Sheets · Лимиты — localStorage (пока).
+  </div>
+</div>
+
+<script>
+/* =======================
+   CONFIG
+   ======================= */
+// ВАЖНО: укажи URL твоего Cloudflare Worker:
+const DEFAULT_API_URL = "https://rough-breeze-5ac6.chatgptnik.workers.dev/";
+
+// Если ключ уже хранится в Worker ENV (рекомендуется) — оставь пустым:
+const DEFAULT_API_KEY = "";
+
+/* =======================
+   CATEGORIES (твоя структура)
+   ======================= */
+const CATEGORIES = [
+  { group: "База жизни", items: [
+    "Жильё (аренда/коммуналка/интернет)",
+    "Мобильная связь/Интернет",
+    "Продукты",
+    "Общественный транспорт",
+    "Автомобиль",
+    "Медицинские расходы (регулярные)",
+    "Страховки",
+    "Подписки (не рабочие)",
+  ]},
+  { group: "Переменные", items: [
+    "Кафе/доставка",
+    "Одежда/обувь",
+    "Цветы",
+    "Красота/уход",
+    "Спонтанные покупки",
+    "Небольшие поездки/выходные",
+    "Ремонт квартиры",
+  ]},
+  { group: "Профессиональные", items: [
+    "Подписки и сервисы (ИИ/хостинги/домен)",
+    "Обучение",
+  ]},
+  { group: "Будущее", items: [
+    "Накопления",
+    "Инвестиции",
+    "Резервный фонд",
+  ]},
+  { group: "Радость", items: [
+    "Путешествия",
+    "Хобби",
+    "Подарки",
+    "Развлечения",
+  ]},
+  { group: "Доходы", items: [
+    "Зарплата",
+    "Проекты",
+    "Разовое",
+    "Другое",
+  ]}
+];
+
+/* =======================
+   BUDGETS (лимиты) — localStorage
+   ======================= */
+const DEFAULT_BUDGETS = {
+  // Задай “разумные” стартовые лимиты (можно потом отредактировать в UI)
+  "Жильё (аренда/коммуналка/интернет)": 45000,
+  "Мобильная связь/Интернет": 1500,
+  "Продукты": 25000,
+  "Общественный транспорт": 4000,
+  "Автомобиль": 12000,
+  "Медицинские расходы (регулярные)": 4000,
+  "Страховки": 0, // обычно разово — можно оставить 0
+  "Подписки (не рабочие)": 1500,
+
+  "Кафе/доставка": 12000,
+  "Одежда/обувь": 6000,
+  "Цветы": 3000,
+  "Красота/уход": 3000,
+  "Спонтанные покупки": 5000,
+  "Небольшие поездки/выходные": 6000,
+  "Ремонт квартиры": 0,
+
+  "Подписки и сервисы (ИИ/хостинги/домен)": 3000,
+  "Обучение": 3000,
+
+  "Накопления": 0,
+  "Инвестиции": 0,
+  "Резервный фонд": 0,
+
+  "Путешествия": 0,
+  "Хобби": 2000,
+  "Подарки": 4000,
+  "Развлечения": 3000,
+};
+
+/* =======================
+   MOTIVATION LADDER
+   — “180к как побочный эффект”
+   ======================= */
+const LADDER_LEVELS = [
+  { name: "Стабильность", target: 150000, note: "держу базу, без просадок" },
+  { name: "Уверенный шаг", target: 165000, note: "добавил небольшой проект/подработку" },
+  { name: "Побочный эффект", target: 180000, note: "не давлю на себя — просто усиливаю рычаги" },
+  { name: "Комфорт", target: 200000, note: "регулярные проекты + рост ставки" },
+  { name: "Сильный режим", target: 250000, note: "системный поток клиентов" },
+  { name: "Мощь", target: 300000, note: "масштабирование" },
+  { name: "Цель-2026", target: 350000, note: "переход на другой уровень" },
+];
+
+/* =======================
+   API CLIENT (Worker + Apps Script)
+   ======================= */
+function loadConfig(){
+  const cfg = JSON.parse(localStorage.getItem("finance_cfg") || "{}");
+  return {
+    apiUrl: cfg.apiUrl || DEFAULT_API_URL,
+    apiKey: cfg.apiKey ?? DEFAULT_API_KEY,
+  };
+}
+function saveConfig(cfg){
+  localStorage.setItem("finance_cfg", JSON.stringify(cfg));
+}
+function getApi(){
+  const { apiUrl, apiKey } = loadConfig();
+  const API_URL = apiUrl;
+  const API_KEY = apiKey || "";
+  async function apiGet(action, params = {}) {
+    const url = new URL(API_URL);
+    url.searchParams.set("action", action);
+    // Если Worker сам добавляет key — оставляем пустым.
+    if (API_KEY) url.searchParams.set("key", API_KEY);
+    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+
+    const res = await fetch(url.toString());
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "API error");
+    return data.data;
+  }
+  async function apiPost(action, payload = {}) {
+    const body = { action, ...payload };
+    if (API_KEY) body.key = API_KEY;
+
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || "API error");
+    return data.data;
+  }
+  return { apiGet, apiPost };
+}
+
+/* =======================
+   STATE
+   ======================= */
+let ALL_TX = [];      // transactions cache
+let ALL_GOALS = [];   // goals cache
+let charts = { flow:null, net:null, pieExp:null, pieInc:null };
+
+function setStatus(text, ok=true){
+  document.getElementById("statusText").textContent = text;
+  const pill = document.getElementById("pillStatus");
+  pill.style.borderColor = ok ? "rgba(34,197,94,.35)" : "rgba(239,68,68,.35)";
+  pill.style.background = ok ? "rgba(34,197,94,.08)" : "rgba(239,68,68,.08)";
+}
+
+function money(n){
+  const v = Math.round(Number(n||0));
+  return v.toLocaleString("ru-RU") + " ₽";
+}
+function pct(n){
+  const v = Number(n||0);
+  return (v*100).toFixed(1) + "%";
+}
+function parseDate(s){
+  // expects YYYY-MM-DD
+  const [y,m,d] = String(s).slice(0,10).split("-").map(Number);
+  return new Date(y, (m||1)-1, d||1);
+}
+function fmtDate(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${dd}`;
+}
+function startOfWeek(d){
+  const x = new Date(d);
+  const day = (x.getDay()+6)%7; // Mon=0
+  x.setDate(x.getDate()-day);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function endOfWeek(d){
+  const s = startOfWeek(d);
+  const e = new Date(s);
+  e.setDate(e.getDate()+6);
+  e.setHours(23,59,59,999);
+  return e;
+}
+function startOfMonth(d){
+  return new Date(d.getFullYear(), d.getMonth(), 1);
+}
+function endOfMonth(d){
+  return new Date(d.getFullYear(), d.getMonth()+1, 0, 23,59,59,999);
+}
+function startOfQuarter(d){
+  const q = Math.floor(d.getMonth()/3);
+  return new Date(d.getFullYear(), q*3, 1);
+}
+function endOfQuarter(d){
+  const s = startOfQuarter(d);
+  return new Date(s.getFullYear(), s.getMonth()+3, 0, 23,59,59,999);
+}
+function startOfYear(d){
+  return new Date(d.getFullYear(), 0, 1);
+}
+function endOfYear(d){
+  return new Date(d.getFullYear(), 11, 31, 23,59,59,999);
+}
+function clampRange(from, to){
+  const f = new Date(from); f.setHours(0,0,0,0);
+  const t = new Date(to); t.setHours(23,59,59,999);
+  return [f,t];
+}
+function daysBetween(a,b){
+  const ms = 24*3600*1000;
+  return Math.ceil((b - a)/ms);
+}
+
+/* =======================
+   BUDGETS helpers
+   ======================= */
+function loadBudgets(){
+  const raw = localStorage.getItem("finance_budgets");
+  if (!raw) return { ...DEFAULT_BUDGETS };
+  try{
+    const b = JSON.parse(raw);
+    return { ...DEFAULT_BUDGETS, ...b };
+  }catch{
+    return { ...DEFAULT_BUDGETS };
+  }
+}
+function saveBudgets(b){
+  localStorage.setItem("finance_budgets", JSON.stringify(b));
+}
+function allExpenseCategories(){
+  const out = [];
+  for (const g of CATEGORIES){
+    if (g.group === "Доходы") continue;
+    out.push(...g.items);
+  }
+  return out;
+}
+
+/* =======================
+   UI INIT
+   ======================= */
+function initCategories(){
+  const sel = document.getElementById("txCategory");
+  sel.innerHTML = "";
+  for (const g of CATEGORIES){
+    const og = document.createElement("optgroup");
+    og.label = g.group;
+    for (const it of g.items){
+      const opt = document.createElement("option");
+      opt.value = it;
+      opt.textContent = it;
+      og.appendChild(opt);
+    }
+    sel.appendChild(og);
+  }
+  document.getElementById("catsPreview").textContent =
+    CATEGORIES.map(g => `• ${g.group}\n  - ${g.items.join("\n  - ")}`).join("\n\n");
+}
+function initDates(){
+  const today = new Date();
+  document.getElementById("txDate").value = fmtDate(today);
+  document.getElementById("anchorDate").value = fmtDate(today);
+  document.getElementById("customFrom").value = fmtDate(startOfMonth(today));
+  document.getElementById("customTo").value = fmtDate(endOfMonth(today));
+}
+
+function initTabs(){
+  document.querySelectorAll(".tab").forEach(t => {
+    t.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+      t.classList.add("active");
+      const name = t.dataset.tab;
+      document.getElementById("tab-pult").classList.toggle("hidden", name !== "pult");
+      document.getElementById("tab-dash").classList.toggle("hidden", name !== "dash");
+      document.getElementById("tab-settings").classList.toggle("hidden", name !== "settings");
+    });
   });
-  console.log("HTTP", res.status);
-  console.log(await res.text());
-})();
+}
+
+function initSettingsUI(){
+  const cfg = loadConfig();
+  document.getElementById("cfgApiUrl").value = cfg.apiUrl;
+  document.getElementById("cfgApiKey").value = cfg.apiKey || "";
+
+  document.getElementById("btnSaveCfg").addEventListener("click", () => {
+    saveConfig({
+      apiUrl: document.getElementById("cfgApiUrl").value.trim(),
+      apiKey: document.getElementById("cfgApiKey").value.trim(),
+    });
+    setStatus("конфиг сохранён", true);
+  });
+
+  document.getElementById("btnTestCfg").addEventListener("click", async () => {
+    try{
+      const { apiGet } = getApi();
+      await apiGet("getGoals");
+      setStatus("тест OK", true);
+      alert("Соединение OK (getGoals вернул успех).");
+    }catch(e){
+      setStatus("ошибка соединения", false);
+      alert("Ошибка: " + e.message);
+    }
+  });
+
+  renderBudgetsEditor();
+  document.getElementById("btnSaveBudgets").addEventListener("click", () => {
+    const inputs = document.querySelectorAll("[data-budget-key]");
+    const b = loadBudgets();
+    inputs.forEach(inp => {
+      const k = inp.dataset.budgetKey;
+      b[k] = Number(inp.value || 0);
+    });
+    saveBudgets(b);
+    alert("Лимиты сохранены.");
+    renderBudgetsEditor();
+    if (!document.getElementById("tab-dash").classList.contains("hidden")){
+      renderBudgetsTable(); renderSpendRule();
+    }
+  });
+}
+
+function renderBudgetsEditor(){
+  const host = document.getElementById("budgetsEditor");
+  const b = loadBudgets();
+  const cats = allExpenseCategories();
+  host.innerHTML = `
+    <div class="grid cols-3">
+      ${cats.map(c => `
+        <div class="kpi">
+          <div class="label">${escapeHtml(c)}</div>
+          <input data-budget-key="${escapeAttr(c)}" type="number" min="0" step="1" value="${Number(b[c]||0)}" />
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+function escapeAttr(s){
+  return String(s).replace(/"/g,'&quot;');
+}
+
+/* =======================
+   SYNC
+   ======================= */
+async function syncAll(){
+  const btn = document.getElementById("btnSync");
+  btn.disabled = true;
+  setStatus("синхронизация...", true);
+
+  try{
+    const { apiGet } = getApi();
+
+    // Достаём данные “пачкой” (можно расширить)
+    const now = new Date();
+    const yearFrom = fmtDate(startOfYear(now));
+    const yearTo = fmtDate(endOfYear(now));
+
+    const [txResp, goalsResp] = await Promise.all([
+      apiGet("listTransactions", { from: yearFrom, to: yearTo }),
+      apiGet("getGoals"),
+    ]);
+
+    ALL_TX = (txResp.items || []).map(x => ({
+      ...x,
+      amount: Number(x.amount||0),
+      date: String(x.date).slice(0,10),
+      _d: parseDate(x.date)
+    }));
+
+    ALL_GOALS = (goalsResp.items || []).map(g => ({
+      ...g,
+      amount: Number(g.amount||0),
+      saved: Number(g.saved||0),
+      due: g.due ? String(g.due).slice(0,10) : "",
+      start: g.start ? String(g.start).slice(0,10) : "",
+      _due: g.due ? parseDate(g.due) : null,
+      _start: g.start ? parseDate(g.start) : null,
+    }));
+
+    setStatus("синхронизировано", true);
+
+    renderWeek();
+    renderGoals();
+    renderMotivation();
+    renderSpendRule();
+    renderSavingsPlan();
+
+    // Dash initial render
+    applyDash();
+
+  }catch(e){
+    console.error(e);
+    setStatus("ошибка синхронизации", false);
+    alert("Ошибка синхронизации: " + e.message);
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+/* =======================
+   ADD TRANSACTION
+   ======================= */
+async function addTransaction(){
+  const date = document.getElementById("txDate").value;
+  const type = document.getElementById("txType").value;
+  const category = document.getElementById("txCategory").value;
+  const subcategory = document.getElementById("txSubcategory").value.trim();
+  const amount = Number(document.getElementById("txAmount").value || 0);
+  const note = document.getElementById("txNote").value.trim();
+
+  if (!date) return alert("Выбери дату.");
+  if (!category) return alert("Выбери категорию.");
+  if (!amount || amount <= 0) return alert("Введи сумму > 0.");
+
+  const btn = document.getElementById("btnAddTx");
+  btn.disabled = true;
+
+  try{
+    const { apiPost } = getApi();
+    await apiPost("addTransaction", { date, type, category, subcategory, amount, note });
+    setStatus("операция добавлена", true);
+
+    // быстрая локальная вставка + перерендер (и потом можно синк)
+    ALL_TX.unshift({ id: "local", date, type, category, subcategory, amount, note, createdAt: new Date().toISOString(), _d: parseDate(date) });
+
+    // очистка
+    document.getElementById("txAmount").value = "";
+    document.getElementById("txNote").value = "";
+
+    renderWeek();
+    renderSpendRule();
+    applyDash(false); // без перезагрузки, но обновить
+
+  }catch(e){
+    console.error(e);
+    setStatus("ошибка добавления", false);
+    alert("Ошибка: " + e.message);
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+/* =======================
+   WEEK VIEW (PULT)
+   ======================= */
+function txInRange(from,to){
+  const [f,t] = clampRange(from,to);
+  return ALL_TX.filter(x => x._d >= f && x._d <= t);
+}
+function sumByType(items){
+  let inc=0, exp=0;
+  for (const x of items){
+    if (x.type === "income") inc += x.amount;
+    else exp += x.amount;
+  }
+  return { inc, exp, net: inc-exp };
+}
+function renderWeek(){
+  const now = new Date();
+  const f = startOfWeek(now);
+  const t = endOfWeek(now);
+
+  const items = txInRange(f,t).sort((a,b)=>b._d - a._d);
+  const { inc, exp, net } = sumByType(items);
+
+  document.getElementById("wkIncome").textContent = money(inc);
+  document.getElementById("wkExpense").textContent = money(exp);
+  document.getElementById("wkNet").textContent = money(net);
+
+  const tbody = document.querySelector("#weekTable tbody");
+  tbody.innerHTML = items.slice(0,50).map(x => `
+    <tr>
+      <td>${escapeHtml(x.date)}</td>
+      <td>${x.type === "income" ? "Доход" : "Расход"}</td>
+      <td>${escapeHtml(x.category)}${x.subcategory ? `<div class="muted small">${escapeHtml(x.subcategory)}</div>`:""}</td>
+      <td>${money(x.amount)}</td>
+      <td class="muted">${escapeHtml(x.note||"")}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="5" class="muted">На этой неделе пока нет операций.</td></tr>`;
+}
+
+/* =======================
+   GOALS
+   ======================= */
+function renderGoals(){
+  const host = document.getElementById("goalsList");
+  document.getElementById("goalsCount").textContent = `Целей: ${ALL_GOALS.length}`;
+
+  if (!ALL_GOALS.length){
+    host.innerHTML = `<div class="hint">Пока нет целей. Добавь их в Google Sheets на листе <b>Goals</b> (name, amount, due, start, saved, priority).</div>`;
+    return;
+  }
+
+  const today = new Date();
+  host.innerHTML = ALL_GOALS
+    .sort((a,b)=> (b.amount-b.saved) - (a.amount-a.saved))
+    .map(g => {
+      const pctDone = g.amount > 0 ? Math.min(1, g.saved / g.amount) : 0;
+      const left = Math.max(0, g.amount - g.saved);
+      const daysLeft = g._due ? Math.max(0, daysBetween(today, g._due)) : null;
+
+      return `
+        <div class="goal">
+          <div class="goalTop">
+            <div>
+              <div class="goalName">${escapeHtml(g.name)}</div>
+              <div class="goalMeta">
+                Цель: <b>${money(g.amount)}</b> · Накоплено: <b>${money(g.saved)}</b> · Осталось: <b>${money(left)}</b>
+                ${g.due ? ` · Дедлайн: <b>${escapeHtml(g.due)}</b>` : ""}
+                ${daysLeft !== null ? ` · Осталось дней: <b>${daysLeft}</b>` : ""}
+              </div>
+            </div>
+            <div class="goalActions">
+              <button class="miniBtn" data-add-goal="${escapeAttr(g.name)}" data-add-sum="10000">+10k</button>
+              <button class="miniBtn" data-add-goal="${escapeAttr(g.name)}" data-add-sum="25000">+25k</button>
+              <button class="miniBtn" data-add-goal="${escapeAttr(g.name)}" data-add-sum="50000">+50k</button>
+            </div>
+          </div>
+          <div class="progress"><div style="width:${(pctDone*100).toFixed(1)}%"></div></div>
+        </div>
+      `;
+    }).join("");
+
+  host.querySelectorAll("[data-add-goal]").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const name = btn.dataset.addGoal;
+      const add = Number(btn.dataset.addSum||0);
+      const g = ALL_GOALS.find(x => x.name === name);
+      if (!g) return;
+
+      try{
+        const { apiPost } = getApi();
+        const newSaved = (g.saved||0) + add;
+        await apiPost("updateGoalSaved", { name, saved: newSaved });
+        g.saved = newSaved;
+        renderGoals();
+        setStatus("цель обновлена", true);
+      }catch(e){
+        console.error(e);
+        setStatus("ошибка цели", false);
+        alert("Ошибка: " + e.message);
+      }
+    });
+  });
+}
+
+/* =======================
+   MOTIVATION
+   — берём доход за последние 30 дней и “прокидываем” в эквивалент месяца
+   ======================= */
+function incomeLastNDays(n=30){
+  const now = new Date();
+  const from = new Date(now); from.setDate(from.getDate()-n+1); from.setHours(0,0,0,0);
+  const items = txInRange(from, now);
+  const inc = items.filter(x=>x.type==="income").reduce((s,x)=>s+x.amount,0);
+  return inc;
+}
+function renderMotivation(){
+  const host = document.getElementById("ladder");
+  const inc30 = incomeLastNDays(30);
+  const monthlyEq = inc30; // уже 30 дней = примерно месяц
+  const currentLevelIdx = [...LADDER_LEVELS].reverse().findIndex(l => monthlyEq >= l.target);
+  const idxFromStart = currentLevelIdx === -1 ? -1 : (LADDER_LEVELS.length - 1 - currentLevelIdx);
+  const current = idxFromStart >= 0 ? LADDER_LEVELS[idxFromStart] : null;
+  const next = idxFromStart >= 0 ? LADDER_LEVELS[Math.min(idxFromStart+1, LADDER_LEVELS.length-1)] : LADDER_LEVELS[0];
+
+  document.getElementById("motivationHint").textContent =
+    `Доход за 30 дней: ${money(inc30)} (≈ месяц)`;
+
+  host.innerHTML = LADDER_LEVELS.map((l, i) => {
+    const done = monthlyEq >= l.target;
+    const isBarrier = (l.target === 180000);
+    return `
+      <div class="badge" style="justify-content:space-between">
+        <span>
+          <span class="dot ${done ? "good" : "dot"}"></span>
+          <b>${escapeHtml(l.name)}</b> · ${money(l.target)}
+          ${isBarrier ? `<span class="muted"> · (180к как “побочный эффект”)</span>` : ""}
+          <div class="muted small">${escapeHtml(l.note)}</div>
+        </span>
+        <span class="muted">${done ? "✓" : ""}</span>
+      </div>
+    `;
+  }).join("");
+
+  const box = document.getElementById("motivationBox");
+  if (!current){
+    box.className = "hint";
+    box.textContent = `Текущий уровень ещё не зафиксирован. Следующий шаг: ${next.name} (${money(next.target)}).`;
+    return;
+  }
+  if (idxFromStart === LADDER_LEVELS.length-1){
+    box.className = "hint ok";
+    box.textContent = `Ты на максимальном уровне шкалы: ${current.name} (${money(current.target)}).`;
+    return;
+  }
+  const gap = Math.max(0, next.target - monthlyEq);
+  box.className = gap > 0 ? "hint" : "hint ok";
+  box.textContent = `Сейчас: ${current.name} (${money(current.target)}). До следующего: ${money(gap)} → ${next.name}.`;
+}
+
+/* =======================
+   SAVINGS PLAN (simple)
+   — оцениваем “зазор” в текущем месяце по лимитам
+   ======================= */
+function monthSpentByCategory(d){
+  const f = startOfMonth(d);
+  const t = endOfMonth(d);
+  const items = txInRange(f,t).filter(x=>x.type==="expense");
+  const by = {};
+  for (const x of items){
+    by[x.category] = (by[x.category]||0) + x.amount;
+  }
+  return by;
+}
+function renderSpendRule(){
+  const b = loadBudgets();
+  const now = new Date();
+  const spent = monthSpentByCategory(now);
+
+  // важные категории для “стопа”
+  const watch = [
+    "Кафе/доставка",
+    "Спонтанные покупки",
+    "Развлечения",
+    "Одежда/обувь",
+    "Цветы"
+  ];
+
+  let warnings = [];
+  for (const c of watch){
+    const limit = Number(b[c]||0);
+    if (!limit) continue;
+    const s = Number(spent[c]||0);
+    const ratio = s/limit;
+    if (ratio >= 1) warnings.push({c, status:"bad", text:`${c}: лимит исчерпан (${money(s)} / ${money(limit)})`});
+    else if (ratio >= 0.85) warnings.push({c, status:"warn", text:`${c}: близко к лимиту (${money(s)} / ${money(limit)})`});
+  }
+
+  const totalLimit = Object.values(b).reduce((s,x)=>s+Number(x||0),0);
+  const totalSpent = Object.values(spent).reduce((s,x)=>s+Number(x||0),0);
+  const remaining = totalLimit ? Math.max(0, totalLimit - totalSpent) : null;
+
+  const box = document.getElementById("spendRuleBox");
+  if (!totalLimit){
+    box.className = "hint";
+    box.textContent = "Лимиты не заданы. Зайди в Настройки → Редактор лимитов.";
+    return;
+  }
+
+  const status = totalSpent > totalLimit ? "bad" : (totalSpent > totalLimit*0.9 ? "warn" : "good");
+  box.className = "hint " + (status==="good" ? "ok" : "danger");
+  box.innerHTML = `
+    <b>${status==="good" ? "Можно тратить" : (status==="warn" ? "Осторожно" : "Нельзя тратить")}</b><br/>
+    Потрачено в этом месяце по лимитам: <b>${money(totalSpent)}</b> из <b>${money(totalLimit)}</b>
+    ${remaining !== null ? ` · осталось: <b>${money(remaining)}</b>` : ""}<br/>
+    ${warnings.length ? `<div style="margin-top:8px">${warnings.map(w => `• ${escapeHtml(w.text)}`).join("<br/>")}</div>` : `<div class="muted" style="margin-top:8px">Критичных превышений по “триггерным” категориям нет.</div>`}
+  `;
+}
+
+function renderSavingsPlan(){
+  const now = new Date();
+  const b = loadBudgets();
+  const spent = monthSpentByCategory(now);
+  const totalLimit = Object.values(b).reduce((s,x)=>s+Number(x||0),0);
+  const totalSpent = Object.values(spent).reduce((s,x)=>s+Number(x||0),0);
+
+  const incMonth = txInRange(startOfMonth(now), endOfMonth(now))
+    .filter(x=>x.type==="income").reduce((s,x)=>s+x.amount,0);
+
+  const free = Math.max(0, incMonth - totalSpent); // грубо: доход - расход по лимитируемым категориям
+  document.getElementById("savingsPlan").innerHTML = `
+    Оценка “зазора” в этом месяце (грубо):<br/>
+    Доход (месяц): <b>${money(incMonth)}</b><br/>
+    Расход (месяц, по лимитам): <b>${money(totalSpent)}</b> из <b>${money(totalLimit)}</b><br/>
+    Потенциально можно направить в цели: <b>${money(free)}</b>
+    <div class="muted small" style="margin-top:8px">
+      Это оценка: если часть расходов не покрыта лимитами, добавь лимиты или расширим правило.
+    </div>
+  `;
+}
+
+/* =======================
+   DASHBOARD (filters, compare, charts)
+   ======================= */
+function getPeriodRange(){
+  const type = document.getElementById("periodType").value;
+  const anchor = parseDate(document.getElementById("anchorDate").value);
+  if (type === "custom"){
+    const f = parseDate(document.getElementById("customFrom").value);
+    const t = parseDate(document.getElementById("customTo").value);
+    return clampRange(f,t);
+  }
+  if (type === "week") return clampRange(startOfWeek(anchor), endOfWeek(anchor));
+  if (type === "month") return clampRange(startOfMonth(anchor), endOfMonth(anchor));
+  if (type === "quarter") return clampRange(startOfQuarter(anchor), endOfQuarter(anchor));
+  if (type === "year") return clampRange(startOfYear(anchor), endOfYear(anchor));
+  return clampRange(startOfMonth(anchor), endOfMonth(anchor));
+}
+function getPrevRange(from, to){
+  const len = daysBetween(from,to) + 1;
+  const prevTo = new Date(from); prevTo.setDate(prevTo.getDate()-1);
+  const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate()-len+1);
+  return clampRange(prevFrom, prevTo);
+}
+
+function computeSummary(items){
+  const { inc, exp, net } = sumByType(items);
+  const saveRate = inc > 0 ? (net / inc) : 0;
+  return { inc, exp, net, saveRate };
+}
+
+function deltaText(curr, prev){
+  const diff = curr - prev;
+  const sign = diff > 0 ? "+" : "";
+  const rel = (prev !== 0) ? diff / Math.abs(prev) : null;
+  if (rel === null) return { cls:"neu", text: `${sign}${money(diff)} (нет базы)` };
+  const cls = diff > 0 ? "good" : (diff < 0 ? "bad" : "neu");
+  return { cls, text: `${sign}${money(diff)} (${sign}${(rel*100).toFixed(1)}%)` };
+}
+
+function groupSeries(items, mode){
+  // mode: "month" | "week"
+  const map = new Map();
+  for (const x of items){
+    const d = x._d;
+    let key, label;
+    if (mode === "month"){
+      key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
+      label = key;
+    } else {
+      const s = startOfWeek(d);
+      key = fmtDate(s);
+      label = fmtDate(s);
+    }
+    if (!map.has(key)) map.set(key, { label, inc:0, exp:0, net:0 });
+    const o = map.get(key);
+    if (x.type === "income") o.inc += x.amount; else o.exp += x.amount;
+    o.net = o.inc - o.exp;
+  }
+  const arr = [...map.values()].sort((a,b)=> a.label.localeCompare(b.label));
+  return arr;
+}
+
+function pieByCategory(items, type){
+  const by = {};
+  for (const x of items){
+    if (x.type !== type) continue;
+    const k = x.category || "Другое";
+    by[k] = (by[k]||0) + x.amount;
+  }
+  const arr = Object.entries(by).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
+  return arr.slice(0,12);
+}
+
+function renderTopCats(items){
+  const exp = pieByCategory(items, "expense");
+  if (!exp.length){
+    document.getElementById("topCats").textContent = "Нет расходов в выбранном периоде.";
+    return;
+  }
+  document.getElementById("topCats").innerHTML =
+    exp.slice(0,8).map((x,i)=>`${i+1}. <b>${escapeHtml(x.k)}</b> — ${money(x.v)}`).join("<br/>");
+}
+
+function renderPeriodTable(items){
+  const tbody = document.querySelector("#periodTable tbody");
+  const rows = items.sort((a,b)=>b._d-a._d).slice(0,80);
+  tbody.innerHTML = rows.map(x=>`
+    <tr>
+      <td>${escapeHtml(x.date)}</td>
+      <td>${x.type==="income"?"Доход":"Расход"}</td>
+      <td>${escapeHtml(x.category)}${x.subcategory ? `<div class="muted small">${escapeHtml(x.subcategory)}</div>`:""}</td>
+      <td>${money(x.amount)}</td>
+      <td class="muted">${escapeHtml(x.note||"")}</td>
+    </tr>
+  `).join("") || `<tr><td colspan="5" class="muted">Нет операций за период.</td></tr>`;
+}
+
+function renderCharts(items){
+  const mode = (document.getElementById("periodType").value === "year") ? "month" : "week";
+  const series = groupSeries(items, mode);
+
+  const labels = series.map(x=>x.label);
+  const income = series.map(x=>x.inc);
+  const expense = series.map(x=>x.exp);
+  const net = series.map(x=>x.net);
+
+  // flow chart
+  if (charts.flow) charts.flow.destroy();
+  charts.flow = new Chart(document.getElementById("chartFlow"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Доход", data: income, tension: .25 },
+        { label: "Расход", data: expense, tension: .25 },
+      ]
+    },
+    options: {
+      responsive:true,
+      plugins:{ legend:{ labels:{ color:"#e5e7eb" } } },
+      scales:{
+        x:{ ticks:{ color:"#9ca3af" }, grid:{ color:"rgba(36,48,65,.45)" } },
+        y:{ ticks:{ color:"#9ca3af" }, grid:{ color:"rgba(36,48,65,.45)" } },
+      }
+    }
+  });
+
+  // net chart
+  if (charts.net) charts.net.destroy();
+  charts.net = new Chart(document.getElementById("chartNet"), {
+    type: "line",
+    data: { labels, datasets: [ { label:"Баланс", data: net, tension:.25 } ] },
+    options: {
+      responsive:true,
+      plugins:{ legend:{ labels:{ color:"#e5e7eb" } } },
+      scales:{
+        x:{ ticks:{ color:"#9ca3af" }, grid:{ color:"rgba(36,48,65,.45)" } },
+        y:{ ticks:{ color:"#9ca3af" }, grid:{ color:"rgba(36,48,65,.45)" } },
+      }
+    }
+  });
+
+  // pies
+  const expPie = pieByCategory(items, "expense");
+  const incPie = pieByCategory(items, "income");
+
+  const pieColors = (n)=>Array.from({length:n}).map((_,i)=>`hsl(${(i*360/Math.max(1,n))|0} 70% 55%)`);
+
+  if (charts.pieExp) charts.pieExp.destroy();
+  charts.pieExp = new Chart(document.getElementById("pieExpense"), {
+    type:"doughnut",
+    data:{
+      labels: expPie.map(x=>x.k),
+      datasets:[{ data: expPie.map(x=>x.v), backgroundColor: pieColors(expPie.length) }]
+    },
+    options:{ plugins:{ legend:{ labels:{ color:"#e5e7eb" } } } }
+  });
+
+  if (charts.pieInc) charts.pieInc.destroy();
+  charts.pieInc = new Chart(document.getElementById("pieIncome"), {
+    type:"doughnut",
+    data:{
+      labels: incPie.map(x=>x.k),
+      datasets:[{ data: incPie.map(x=>x.v), backgroundColor: pieColors(incPie.length) }]
+    },
+    options:{ plugins:{ legend:{ labels:{ color:"#e5e7eb" } } } }
+  });
+}
+
+function forecastText(from,to){
+  // Простая модель: берем средние значения за последние 3 аналогичных периода и прогнозируем следующий
+  const len = daysBetween(from,to) + 1;
+  const periods = [];
+  let end = new Date(from); end.setDate(end.getDate()-1);
+
+  for (let i=0;i<3;i++){
+    const pTo = new Date(end);
+    const pFrom = new Date(pTo); pFrom.setDate(pFrom.getDate()-len+1);
+    const items = txInRange(pFrom,pTo);
+    periods.push(computeSummary(items));
+    end = new Date(pFrom); end.setDate(end.getDate()-1);
+  }
+  if (!periods.length) return "Недостаточно данных для прогноза.";
+
+  const avgInc = periods.reduce((s,p)=>s+p.inc,0)/periods.length;
+  const avgExp = periods.reduce((s,p)=>s+p.exp,0)/periods.length;
+  const avgNet = avgInc - avgExp;
+  const saveRate = avgInc>0 ? avgNet/avgInc : 0;
+
+  return `Прогноз на следующий аналогичный период (среднее последних 3): доход ≈ ${money(avgInc)}, расход ≈ ${money(avgExp)}, баланс ≈ ${money(avgNet)}, норма накоплений ≈ ${pct(saveRate)}.`;
+}
+
+function applyDash(showAlertIfNoData=true){
+  if (!ALL_TX.length && showAlertIfNoData){
+    // можно мягко
+  }
+
+  const [from,to] = getPeriodRange();
+  const items = txInRange(from,to);
+
+  const compareOn = document.getElementById("compareMode").value === "on";
+  const curr = computeSummary(items);
+
+  // KPIs
+  document.getElementById("kIncome").textContent = money(curr.inc);
+  document.getElementById("kExpense").textContent = money(curr.exp);
+  document.getElementById("kNet").textContent = money(curr.net);
+  document.getElementById("kSaveRate").textContent = pct(curr.saveRate);
+
+  if (compareOn){
+    const [pf,pt] = getPrevRange(from,to);
+    const prevItems = txInRange(pf,pt);
+    const prev = computeSummary(prevItems);
+
+    const di = deltaText(curr.inc, prev.inc);
+    const de = deltaText(curr.exp, prev.exp);
+    const dn = deltaText(curr.net, prev.net);
+    const ds = deltaText(curr.saveRate*100, prev.saveRate*100); // percentage points
+
+    document.getElementById("dIncome").className = "delta " + di.cls;
+    document.getElementById("dIncome").textContent = "Δ " + di.text;
+
+    document.getElementById("dExpense").className = "delta " + (de.cls === "good" ? "bad" : (de.cls === "bad" ? "good" : "neu"));
+    // логика: рост расхода — это “плохо”
+    document.getElementById("dExpense").textContent = "Δ " + de.text;
+
+    document.getElementById("dNet").className = "delta " + dn.cls;
+    document.getElementById("dNet").textContent = "Δ " + dn.text;
+
+    document.getElementById("dSaveRate").className = "delta " + (curr.saveRate >= prev.saveRate ? "good" : "bad");
+    document.getElementById("dSaveRate").textContent = `Δ ${(curr.saveRate-prev.saveRate>=0?"+":"")}${((curr.saveRate-prev.saveRate)*100).toFixed(1)} п.п.`;
+  }else{
+    ["dIncome","dExpense","dNet","dSaveRate"].forEach(id=>{
+      const el = document.getElementById(id);
+      el.className="delta neu";
+      el.textContent="—";
+    });
+  }
+
+  // Forecast
+  document.getElementById("forecastBox").textContent = forecastText(from,to);
+
+  // Charts + pies + tables
+  renderCharts(items);
+  renderTopCats(items);
+  renderPeriodTable(items);
+
+  // Budgets (current month)
+  renderBudgetsTable();
+  renderSpendRule();
+}
+
+function renderBudgetsTable(){
+  const b = loadBudgets();
+  const now = new Date();
+  const spent = monthSpentByCategory(now);
+
+  const tbody = document.querySelector("#budgetTable tbody");
+  const cats = allExpenseCategories();
+
+  const rows = cats.map(c => {
+    const limit = Number(b[c]||0);
+    const s = Number(spent[c]||0);
+    const left = Math.max(0, limit - s);
+    let status = "—", dot="dot";
+    if (limit > 0){
+      const ratio = s/limit;
+      if (ratio >= 1) { status = "СТОП"; dot = "dot bad"; }
+      else if (ratio >= 0.85) { status = "осторожно"; dot="dot warn"; }
+      else { status = "ok"; dot="dot good"; }
+    }
+    return { c, limit, s, left, status, dot };
+  }).sort((a,b)=> (b.s-b.left) - (a.s-a.left)); // чуть “по важности”
+
+  tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td>${escapeHtml(r.c)}</td>
+      <td>${money(r.limit)}</td>
+      <td>${money(r.s)}</td>
+      <td>${money(r.left)}</td>
+      <td><span class="badge"><span class="${r.dot}"></span>${escapeHtml(r.status)}</span></td>
+    </tr>
+  `).join("");
+}
+
+/* =======================
+   UI handlers
+   ======================= */
+function onPeriodTypeChange(){
+  const type = document.getElementById("periodType").value;
+  const custom = type === "custom";
+  document.getElementById("customFromWrap").classList.toggle("hidden", !custom);
+  document.getElementById("customToWrap").classList.toggle("hidden", !custom);
+}
+function initDashHandlers(){
+  document.getElementById("periodType").addEventListener("change", onPeriodTypeChange);
+  document.getElementById("btnApply").addEventListener("click", ()=>applyDash());
+  onPeriodTypeChange();
+
+  document.getElementById("btnEditBudgets").addEventListener("click", () => {
+    // переключаемся на настройки + скролл
+    document.querySelector('.tab[data-tab="settings"]').click();
+    document.getElementById("budgetsEditor").scrollIntoView({behavior:"smooth", block:"start"});
+  });
+
+  document.getElementById("btnResetBudgets").addEventListener("click", () => {
+    if (!confirm("Сбросить лимиты к значениям по умолчанию?")) return;
+    localStorage.removeItem("finance_budgets");
+    renderBudgetsEditor();
+    renderBudgetsTable();
+    renderSpendRule();
+  });
+}
+
+/* =======================
+   BOOT
+   ======================= */
+document.getElementById("btnSync").addEventListener("click", syncAll);
+document.getElementById("btnAddTx").addEventListener("click", addTransaction);
+
+initTabs();
+initCategories();
+initDates();
+initSettingsUI();
+initDashHandlers();
+
+// Автосинк при старте (мягко)
+setStatus("готово к синхронизации", true);
 </script>
+</body>
+</html>
