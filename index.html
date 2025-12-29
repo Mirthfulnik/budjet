@@ -4,472 +4,1576 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Финансовый пульт 2026</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.19.3/dist/xlsx.full.min.js"></script>
+
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
-    .grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
-    @media (min-width: 1100px){ .grid { grid-template-columns: 1.2fr .8fr; } }
-    .card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px; }
-    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
-    label { display: grid; gap: 6px; font-size: 13px; }
-    input, select, button { padding: 10px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 14px; }
-    button { cursor: pointer; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; font-size: 14px; }
-    th { font-size: 12px; color: #6b7280; }
-    .ok { font-weight: 700; }
-    .pill { display:inline-block; padding:6px 10px; border-radius: 999px; font-weight:700; }
-    .pill.ok { background:#dcfce7; color:#166534; }
-    .pill.bad { background:#fee2e2; color:#991b1b; }
-    .muted { color:#6b7280; }
-    .mono { font-variant-numeric: tabular-nums; }
-    .progress { height: 10px; background:#f3f4f6; border-radius: 999px; overflow:hidden; }
-    .bar { height: 100%; background:#111827; width: 0%; }
+    :root{ --bd:#e5e7eb; --muted:#6b7280; --bg:#fff; --card:#fff; --shadow:0 2px 14px rgba(0,0,0,.06); }
+    body{ font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; margin:20px; background:var(--bg); color:#111827; }
+    h1{ margin:0 0 10px; }
+    .muted{ color:var(--muted); }
+    .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 16px; }
+    .tab{ border:1px solid var(--bd); background:#f9fafb; padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:800; }
+    .tab.active{ background:#111827; color:#fff; border-color:#111827; }
+    .grid{ display:grid; gap:16px; grid-template-columns:1fr; }
+    @media(min-width:1100px){ .grid{ grid-template-columns:1.2fr .8fr; } }
+    .card{ border:1px solid var(--bd); border-radius:16px; padding:14px; background:var(--card); box-shadow:var(--shadow); }
+    .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
+    label{ display:grid; gap:6px; font-size:13px; min-width:180px; }
+    input,select,button{ padding:10px 10px; border:1px solid #d1d5db; border-radius:12px; font-size:14px; }
+    button{ cursor:pointer; font-weight:900; }
+    button.primary{ background:#111827; color:#fff; border-color:#111827; }
+    button.danger{ background:#fee2e2; border-color:#fecaca; color:#991b1b; }
+    table{ width:100%; border-collapse:collapse; }
+    th,td{ border-bottom:1px solid #eee; padding:10px 8px; text-align:left; font-size:14px; vertical-align:top; }
+    th{ font-size:12px; color:var(--muted); }
+    .mono{ font-variant-numeric:tabular-nums; }
+    .pill{ display:inline-block; padding:6px 10px; border-radius:999px; font-weight:900; }
+    .pill.ok{ background:#dcfce7; color:#166534; }
+    .pill.bad{ background:#fee2e2; color:#991b1b; }
+    .split{ display:grid; gap:12px; grid-template-columns:1fr; }
+    @media(min-width:900px){ .split{ grid-template-columns:1fr 1fr; } }
+    .progress{ height:10px; background:#f3f4f6; border-radius:999px; overflow:hidden; }
+    .bar{ height:100%; background:#111827; width:0%; }
+    .kpi{ display:flex; gap:14px; flex-wrap:wrap; }
+    .kpi > div{ min-width:240px; }
+    .kpi .big{ font-size:22px; font-weight:950; }
+    .divider{ height:1px; background:#eee; margin:12px 0; }
+    .hidden{ display:none; }
+    .note{ font-size:12px; color:var(--muted); line-height:1.45; }
+    .twoCol{ display:grid; gap:12px; grid-template-columns:1fr; }
+    @media(min-width:1100px){ .twoCol{ grid-template-columns:1fr 1fr; } }
+    .warn{ border:1px solid #fecaca; background:#fff1f2; padding:10px; border-radius:12px; }
+    .okbox{ border:1px solid #bbf7d0; background:#f0fdf4; padding:10px; border-radius:12px; }
   </style>
 </head>
 <body>
   <h1>Финансовый пульт 2026</h1>
-  <p class="muted">Данные сохраняются в браузере (localStorage). Можно потом перенести на сервер.</p>
+  <div class="muted">Импорт Excel → факт (операции/недели) → цели → уровни → дашборд → экспорт обновлённого Excel.</div>
 
-  <div class="grid">
-    <div class="card">
-      <h2>Еженедельный ввод</h2>
-
-      <div class="row">
-        <label>Сценарий дохода (₽/мес)
-          <select id="incomeScenario">
-            <option value="160000">160 000</option>
-            <option value="200000">200 000</option>
-            <option value="250000">250 000</option>
-            <option value="300000">300 000</option>
-          </select>
-        </label>
-
-        <label>Красная линия (остаток, ₽)
-          <input id="redLine" type="number" value="300000" />
-        </label>
-
-        <label>Стартовый остаток (₽)
-          <input id="startingCash" type="number" value="1000000" />
-        </label>
-
-        <button id="resetBtn" title="Сбросить всё">Сброс</button>
-      </div>
-
-      <hr style="margin:16px 0; border:none; border-top:1px solid #eee;" />
-
-      <div class="row">
-        <label>Неделя (пример: 2026-W01)
-          <input id="weekId" placeholder="2026-W01" />
-        </label>
-
-        <label>Месяц
-          <select id="month">
-            <option>Январь</option><option>Февраль</option><option>Март</option><option>Апрель</option>
-            <option>Май</option><option>Июнь</option><option>Июль</option><option>Август</option>
-            <option>Сентябрь</option><option>Октябрь</option><option>Ноябрь</option><option>Декабрь</option>
-          </select>
-        </label>
-
-        <label>Доход (факт)
-          <input id="income" type="number" value="0" />
-        </label>
-
-        <label>Расход (факт)
-          <input id="expense" type="number" value="0" />
-        </label>
-
-        <label>Комментарий
-          <input id="note" placeholder="опционально" />
-        </label>
-
-        <button id="addWeek">Добавить / обновить</button>
-      </div>
-
-      <div style="margin-top:14px; overflow:auto;">
-        <table id="weeksTable">
-          <thead>
-            <tr>
-              <th>Неделя</th><th>Месяц</th><th>Доход</th><th>Расход</th><th>Баланс</th><th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <div class="row" style="margin-top:14px;">
-        <div>
-          <div class="muted">Свободно по плану (упрощённо)</div>
-          <div id="freeMoney" class="mono" style="font-size:22px; font-weight:800;">—</div>
-        </div>
-
-        <div>
-          <div class="muted">Можно тратить?</div>
-          <div id="canSpend" class="pill">—</div>
-        </div>
-
-        <div>
-          <div class="muted">Текущий уровень</div>
-          <div id="level" class="mono" style="font-size:22px; font-weight:800;">—</div>
-        </div>
-
-        <div>
-          <div class="muted">Остаток (модель)</div>
-          <div id="cash" class="mono" style="font-size:22px; font-weight:800;">—</div>
-        </div>
-      </div>
-
-      <div style="margin-top:14px;">
-        <canvas id="lineChart" height="110"></canvas>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>Цели и мотивация</h2>
-
-      <div id="goals"></div>
-
-      <hr style="margin:16px 0; border:none; border-top:1px solid #eee;" />
-
-      <h3>Шкала уровней (180k — побочный эффект)</h3>
-      <ol class="muted" style="line-height:1.5;">
-        <li><b>Старт</b>: 4 недели учёта подряд</li>
-        <li><b>Щит</b>: закрыта страховка авто (и ты автоматически держишь темп, который обычно ведёт к ~180k)</li>
-        <li><b>Рельсы</b>: закрыты ТО + Грузия</li>
-        <li><b>Накопление I</b>: 2 месяца с балансом ≥ 0</li>
-        <li><b>Накопление II</b>: закрыты цели октября (Поли + Япония)</li>
-        <li><b>Свобода</b>: резерв ≥ 3 месяцев базы (ставится вручную)</li>
-      </ol>
-
-      <label style="margin-top:10px;">Резерв ≥ 3 месяцев базы?
-        <select id="reserveFlag">
-          <option value="no">нет</option>
-          <option value="yes">да</option>
-        </select>
-      </label>
-
-      <div style="margin-top:14px;">
-        <canvas id="pieChart" height="200"></canvas>
-      </div>
-    </div>
+  <div class="tabs">
+    <button class="tab active" data-view="pult">Раздел 1 · Пульт</button>
+    <button class="tab" data-view="dash">Раздел 2 · Дашборд</button>
+    <button class="tab" data-view="settings">Раздел 3 · Экспорт/Настройки</button>
   </div>
 
-<script>
-  const STORAGE_KEY = "fin2026_v1";
+  <!-- ===================== -->
+  <!-- VIEW: ПУЛЬТ           -->
+  <!-- ===================== -->
+  <section id="view-pult">
+    <div class="grid">
+      <div class="card">
+        <h2>Пульт · Ввод факта</h2>
 
-  const defaults = {
-    incomeScenario: 160000,
-    redLine: 300000,
-    startingCash: 1000000,
-    weeks: [], // {weekId, month, income, expense, note}
-    goals: [
-      { name: "Страховка автомобиля", amount: 80000, due: "Март", start: "Январь", saved: 0 },
-      { name: "ТО автомобиля", amount: 50000, due: "Июнь", start: "Апрель", saved: 0 },
-      { name: "Отпуск в Грузии", amount: 150000, due: "Июнь", start: "Апрель", saved: 0 },
-      { name: "День рождения Поли", amount: 100000, due: "Октябрь", start: "Июль", saved: 0 },
-      { name: "Отпуск в Японии", amount: 400000, due: "Октябрь", start: "Июль", saved: 0 },
-      { name: "Подарки на Новый год", amount: 100000, due: "Декабрь", start: "Ноябрь", saved: 0 }
-    ],
-    reserveFlag: "no",
-  };
+        <div class="row">
+          <label>Дата операции
+            <input id="txDate" type="date" />
+          </label>
 
-  const months = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
-  const idx = m => months.indexOf(m) + 1;
+          <label>Тип
+            <select id="txType">
+              <option value="expense">Расход</option>
+              <option value="income">Доход</option>
+            </select>
+          </label>
 
-  function loadState(){
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : structuredClone(defaults);
-    } catch {
-      return structuredClone(defaults);
-    }
-  }
-  function saveState(state){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
+          <label>Категория
+            <select id="txCat"></select>
+          </label>
 
-  function fmt(n){ return (n||0).toLocaleString("ru-RU") + " ₽"; }
+          <label>Подкатегория
+            <input id="txSubcat" placeholder="например: аренда, продукты" />
+          </label>
 
-  function monthsToSave(start, due){
-    // копим до месяца траты (не включая due)
-    return Math.max(1, idx(due) - idx(start));
-  }
-  function neededPerMonth(goal){
-    const m = monthsToSave(goal.start, goal.due);
-    return Math.round(goal.amount / m);
-  }
+          <label>Сумма (₽)
+            <input id="txAmount" type="number" value="0" />
+          </label>
 
-  // --- UI refs ---
-  const elScenario = document.getElementById("incomeScenario");
-  const elRedLine = document.getElementById("redLine");
-  const elStartCash = document.getElementById("startingCash");
-  const elReserve = document.getElementById("reserveFlag");
+          <label>Комментарий
+            <input id="txNote" placeholder="опционально" />
+          </label>
 
-  const elWeekId = document.getElementById("weekId");
-  const elMonth = document.getElementById("month");
-  const elIncome = document.getElementById("income");
-  const elExpense = document.getElementById("expense");
-  const elNote = document.getElementById("note");
-  const elAdd = document.getElementById("addWeek");
-  const elReset = document.getElementById("resetBtn");
+          <button id="addTx" class="primary">Добавить операцию</button>
+        </div>
 
-  const elTableBody = document.querySelector("#weeksTable tbody");
-  const elGoals = document.getElementById("goals");
-  const elFree = document.getElementById("freeMoney");
-  const elCan = document.getElementById("canSpend");
-  const elLevel = document.getElementById("level");
-  const elCash = document.getElementById("cash");
+        <div class="note" style="margin-top:10px;">
+          Для структуры расходов/доходов и произвольных диапазонов лучше вносить <b>операции</b>.
+          Недели — быстрый режим и синк с Excel «Еженедельный ввод».
+        </div>
 
-  // Charts
-  let lineChart, pieChart;
+        <div class="divider"></div>
 
-  function computeMonthlyFact(weeks){
-    const map = new Map(); // month -> {income, expense}
-    for (const w of weeks){
-      const cur = map.get(w.month) || { income:0, expense:0 };
-      cur.income += +w.income || 0;
-      cur.expense += +w.expense || 0;
-      map.set(w.month, cur);
-    }
-    return months.map(m => ({ month:m, ...(map.get(m)||{income:0, expense:0}) }));
-  }
+        <div class="row">
+          <label>Быстрый ввод недели
+            <input id="wkId" placeholder="2026-W05" />
+          </label>
+          <label>Месяц
+            <select id="wkMonth"></select>
+          </label>
+          <label>Доход недели (₽)
+            <input id="wkIncome" type="number" value="0" />
+          </label>
+          <label>Расход недели (₽)
+            <input id="wkExpense" type="number" value="0" />
+          </label>
+          <button id="addWeek" class="primary">Добавить/обновить неделю</button>
+        </div>
 
-  function computeCash(state){
-    // простая модель: стартовый остаток + сумма всех недельных балансов
-    const net = state.weeks.reduce((s,w)=> s + (+w.income||0) - (+w.expense||0), 0);
-    return (+state.startingCash||0) + net;
-  }
+        <div style="margin-top:14px; overflow:auto;">
+          <h3>Операции</h3>
+          <table id="txTable">
+            <thead><tr>
+              <th>Дата</th><th>Тип</th><th>Категория</th><th>Подкат.</th><th>Сумма</th><th>Комментарий</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
 
-  function computeFreeMoney(state){
-    // упрощённый показатель: сценарный доход - (плановая нагрузка из excel модели) - (сумма целей/мес)
-    // Здесь мы берём только цели/мес, а "плановую нагрузку" ты можешь подогнать позже как константу.
-    const planMonthly = 0; // можно заменить на твою плановую сумму из Excel
-    const goalsMonthly = state.goals.reduce((s,g)=> s + neededPerMonth(g), 0);
-    return (+state.incomeScenario||0) - planMonthly - goalsMonthly;
-  }
+        <div style="margin-top:14px; overflow:auto;">
+          <h3>Недели</h3>
+          <table id="wkTable">
+            <thead><tr>
+              <th>Неделя</th><th>Месяц</th><th>Доход</th><th>Расход</th><th>Баланс</th><th></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
 
-  function goalStatus(g){
-    const left = Math.max(0, g.amount - (g.saved||0));
-    return { left, closed: left === 0 };
-  }
+      <div class="card">
+        <h2>Пульт · Цели, мотивация, лимиты</h2>
 
-  function computeLevel(state){
-    const filledWeeks = state.weeks.filter(w => (+w.income||0)>0 || (+w.expense||0)>0).length;
-    const has4Weeks = filledWeeks >= 4;
-
-    const g = state.goals.map(goalStatus);
-    const insClosed = g[0]?.closed;
-    const toClosed = g[1]?.closed;
-    const geoClosed = g[2]?.closed;
-    const poliClosed = g[3]?.closed;
-    const jpClosed = g[4]?.closed;
-
-    // Месяцы с положительным балансом (по факту недель суммируем по месяцу)
-    const mf = computeMonthlyFact(state.weeks);
-    const nonNegMonths = mf.filter(x => (x.income - x.expense) >= 0 && (x.income + x.expense) > 0).length;
-
-    if (!has4Weeks) return { level:0, name:"Старт" };
-    if (has4Weeks && !insClosed) return { level:0, name:"Старт" };
-    if (insClosed && !(toClosed && geoClosed)) return { level:1, name:"Щит" };
-    if (toClosed && geoClosed && nonNegMonths < 2) return { level:2, name:"Рельсы" };
-    if (nonNegMonths >= 2 && !(poliClosed && jpClosed)) return { level:3, name:"Накопление I" };
-    if (poliClosed && jpClosed && state.reserveFlag !== "yes") return { level:4, name:"Накопление II" };
-    if (state.reserveFlag === "yes") return { level:5, name:"Свобода" };
-    return { level:0, name:"Старт" };
-  }
-
-  function renderGoals(state){
-    elGoals.innerHTML = "";
-    state.goals.forEach((g, i) => {
-      const st = goalStatus(g);
-      const pct = Math.min(100, Math.round((g.saved||0) / g.amount * 100));
-      const need = neededPerMonth(g);
-
-      const wrap = document.createElement("div");
-      wrap.className = "card";
-      wrap.style.margin = "10px 0";
-
-      wrap.innerHTML = `
-        <div class="row" style="justify-content:space-between;">
+        <div class="kpi">
           <div>
-            <div style="font-weight:800;">${g.name}</div>
-            <div class="muted">Нужно: <span class="mono">${fmt(g.amount)}</span> · Месяц траты: <b>${g.due}</b> · Копим с: <b>${g.start}</b></div>
-            <div class="muted">План: <b>${fmt(need)}</b> / мес</div>
+            <div class="muted">Остаток (модель)</div>
+            <div id="kpiCash" class="big mono">—</div>
           </div>
-          <div class="pill ${st.closed ? "ok":"bad"}">${st.closed ? "Закрыта":"Открыта"}</div>
+          <div>
+            <div class="muted">Можно тратить?</div>
+            <div id="kpiCan" class="pill">—</div>
+            <div id="kpiCanReason" class="note"></div>
+          </div>
+          <div>
+            <div class="muted">Текущий уровень</div>
+            <div id="kpiLevel" class="big mono">—</div>
+            <div class="note" id="kpiJoyRule">—</div>
+          </div>
         </div>
-        <div style="margin-top:10px;">
-          <div class="progress"><div class="bar" style="width:${pct}%;"></div></div>
+
+        <div class="divider"></div>
+
+        <div class="row">
+          <label>Красная линия (₽)
+            <input id="redLine" type="number" value="300000" />
+          </label>
+          <label>Стартовый остаток (₽)
+            <input id="startCash" type="number" value="1000000" />
+          </label>
+          <label>Доход-сценарий (₽/мес)
+            <select id="scenario">
+              <option value="160000">160 000</option>
+              <option value="200000">200 000</option>
+              <option value="250000">250 000</option>
+              <option value="300000">300 000</option>
+            </select>
+          </label>
+          <label>Резерв ≥ 3 мес базы?
+            <select id="reserveFlag">
+              <option value="no">нет</option>
+              <option value="yes">да</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="twoCol">
+          <div class="card">
+            <h3>Календарь целей: что откладывать в этом месяце</h3>
+            <div class="row">
+              <label>Месяц
+                <select id="goalMonth"></select>
+              </label>
+              <button id="recalcGoalsMonth" class="primary">Показать</button>
+            </div>
+            <div style="margin-top:10px;" id="goalsMonthPlan"></div>
+          </div>
+
+          <div class="card">
+            <h3>Лимит “радости” по уровню</h3>
+            <div class="note">Категория “Радость” — это расходы с категорией <b>Радость</b> или подкатегорией, содержащей “радость/развлеч/хобби/кафе”.</div>
+            <div class="divider"></div>
+            <div class="row">
+              <div>
+                <div class="muted">Потрачено “радости” в текущем месяце</div>
+                <div id="joySpent" class="big mono">—</div>
+              </div>
+              <div>
+                <div class="muted">Лимит “радости” в текущем месяце</div>
+                <div id="joyLimit" class="big mono">—</div>
+              </div>
+              <div>
+                <div class="muted">Осталось</div>
+                <div id="joyLeft" class="big mono">—</div>
+              </div>
+            </div>
+            <div style="margin-top:10px;" id="joySignal"></div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <h3>Цели (прогресс + обратный отсчёт)</h3>
+        <div id="goalsWrap"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== -->
+  <!-- VIEW: ДАШБОРД         -->
+  <!-- ===================== -->
+  <section id="view-dash" class="hidden">
+    <div class="card">
+      <h2>Дашборд</h2>
+
+      <div class="row">
+        <label>Режим периода
+          <select id="mode">
+            <option value="week">Неделя</option>
+            <option value="month" selected>Месяц</option>
+            <option value="quarter">Квартал</option>
+            <option value="year">Год</option>
+            <option value="range">Произвольный период</option>
+          </select>
+        </label>
+
+        <label>Период (текущий)
+          <select id="periodNow"></select>
+        </label>
+
+        <label>Период (сравнение)
+          <select id="periodPrev"></select>
+        </label>
+
+        <label>Прогноз (метод)
+          <select id="forecastMethod">
+            <option value="avg">Среднее прошлых периодов</option>
+            <option value="trend">Линейный тренд</option>
+          </select>
+        </label>
+
+        <button id="recalc" class="primary">Пересчитать</button>
+      </div>
+
+      <div class="row" id="rangeRow" style="margin-top:10px; display:none;">
+        <label>Дата начала
+          <input id="rangeFrom" type="date" />
+        </label>
+        <label>Дата конца
+          <input id="rangeTo" type="date" />
+        </label>
+        <div class="note">Сравнение: аналогичный период назад строится автоматически.</div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="kpi">
+        <div>
+          <div class="muted">Расход (период)</div>
+          <div id="kpiExp" class="big mono">—</div>
+          <div id="kpiExpDelta" class="muted mono">—</div>
+        </div>
+        <div>
+          <div class="muted">Доход (период)</div>
+          <div id="kpiInc" class="big mono">—</div>
+          <div id="kpiIncDelta" class="muted mono">—</div>
+        </div>
+        <div>
+          <div class="muted">Баланс (период)</div>
+          <div id="kpiBal" class="big mono">—</div>
+          <div id="kpiBalDelta" class="muted mono">—</div>
+        </div>
+        <div>
+          <div class="muted">Прогноз (след. период)</div>
+          <div id="kpiFc" class="big mono">—</div>
+          <div class="muted">по доходу и расходу</div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="split">
+        <div class="card">
+          <h3>Динамика (месяцы): доход / расход / баланс</h3>
+          <canvas id="chartLine" height="140"></canvas>
+        </div>
+        <div class="card">
+          <h3>Структура расходов (категории) — период</h3>
+          <canvas id="chartDonutExp" height="140"></canvas>
+          <div class="note">Структура строится по операциям.</div>
+        </div>
+      </div>
+
+      <div class="split" style="margin-top:12px;">
+        <div class="card">
+          <h3>Структура доходов (категории) — период</h3>
+          <canvas id="chartDonutInc" height="140"></canvas>
+        </div>
+        <div class="card">
+          <h3>Лимиты по категориям (план vs факт) — период</h3>
+          <canvas id="chartLimits" height="140"></canvas>
           <div class="row" style="margin-top:8px;">
-            <label>Накоплено
-              <input data-goal="${i}" class="goalSaved" type="number" value="${g.saved||0}" />
-            </label>
-            <div class="muted">Осталось: <b class="mono">${fmt(st.left)}</b></div>
+            <div>
+              <div class="muted">Сигнал “стоп”</div>
+              <div id="stopSignal" class="pill">—</div>
+            </div>
+            <div>
+              <div class="muted">Остаток лимита (всего)</div>
+              <div id="limitLeft" class="big mono">—</div>
+            </div>
           </div>
         </div>
-      `;
-      elGoals.appendChild(wrap);
-    });
+      </div>
 
-    document.querySelectorAll(".goalSaved").forEach(inp => {
-      inp.addEventListener("change", (e) => {
-        const i = +e.target.dataset.goal;
-        const v = +e.target.value || 0;
-        const st = loadState();
-        st.goals[i].saved = v;
-        saveState(st);
-        rerender();
-      });
-    });
-  }
+      <div class="divider"></div>
 
-  function renderWeeks(state){
-    const rows = [...state.weeks].sort((a,b)=> a.weekId.localeCompare(b.weekId));
-    elTableBody.innerHTML = "";
-    for (const w of rows){
-      const tr = document.createElement("tr");
-      const bal = (+w.income||0) - (+w.expense||0);
-      tr.innerHTML = `
-        <td>${w.weekId}</td>
-        <td>${w.month}</td>
-        <td class="mono">${fmt(+w.income||0)}</td>
-        <td class="mono">${fmt(+w.expense||0)}</td>
-        <td class="mono" style="font-weight:800;">${fmt(bal)}</td>
-        <td><button data-del="${w.weekId}">Удалить</button></td>
-      `;
-      elTableBody.appendChild(tr);
-    }
-    elTableBody.querySelectorAll("button[data-del]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.dataset.del;
-        const st = loadState();
-        st.weeks = st.weeks.filter(x => x.weekId !== id);
-        saveState(st);
-        rerender();
-      });
-    });
-  }
+      <div class="split">
+        <div class="card">
+          <h3>Прогресс целей</h3>
+          <canvas id="chartGoals" height="160"></canvas>
+          <div id="goalsCountdown" class="note" style="margin-top:8px;"></div>
+        </div>
+        <div class="card">
+          <h3>Стоп-лист по перерасходам</h3>
+          <div id="overspendList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  function renderIndicators(state){
-    const cash = computeCash(state);
-    const free = computeFreeMoney(state);
-    const lvl = computeLevel(state);
+  <!-- ===================== -->
+  <!-- VIEW: SETTINGS        -->
+  <!-- ===================== -->
+  <section id="view-settings" class="hidden">
+    <div class="card">
+      <h2>Экспорт / Настройки</h2>
 
-    elCash.textContent = fmt(cash);
-    elFree.textContent = fmt(free);
-    elLevel.textContent = `${lvl.level} — ${lvl.name}`;
+      <div class="row">
+        <label>Импорт Excel (.xlsx)
+          <input id="excelIn" type="file" accept=".xlsx" />
+        </label>
 
-    const can = (cash >= (+state.redLine||0));
-    elCan.className = "pill " + (can ? "ok" : "bad");
-    elCan.textContent = can ? "МОЖНО" : "НЕЛЬЗЯ";
-  }
+        <button id="exportExcel" class="primary">Экспорт обновлённого Excel</button>
+        <button id="exportJson">Экспорт JSON</button>
+        <button id="importJson">Импорт JSON</button>
+        <button id="resetAll" class="danger">Сбросить всё</button>
+      </div>
 
-  function renderCharts(state){
-    const mf = computeMonthlyFact(state);
-    const labels = mf.map(x => x.month);
-    const incomes = mf.map(x => x.income);
-    const expenses = mf.map(x => x.expense);
+      <div class="divider"></div>
 
-    // Line
-    if (lineChart) lineChart.destroy();
-    lineChart = new Chart(document.getElementById("lineChart"), {
-      type: "line",
-      data: {
-        labels,
-        datasets: [
-          { label: "Доход (факт)", data: incomes },
-          { label: "Расход (факт)", data: expenses },
-        ]
-      },
-      options: {
-        responsive: true,
-        interaction: { mode: "index", intersect: false },
-        scales: { y: { ticks: { callback: v => v.toLocaleString("ru-RU") } } }
-      }
-    });
+      <h3>Excel</h3>
+      <div id="excelInfo" class="note">Excel ещё не импортирован.</div>
 
-    // Pie: structure of expenses by month (simple)
-    const totalIncome = incomes.reduce((a,b)=>a+b,0);
-    const totalExpense = expenses.reduce((a,b)=>a+b,0);
-    if (pieChart) pieChart.destroy();
-    pieChart = new Chart(document.getElementById("pieChart"), {
-      type: "pie",
-      data: {
-        labels: ["Доход (год)", "Расход (год)"],
-        datasets: [{ data: [totalIncome, totalExpense] }]
-      },
-      options: { responsive: true }
-    });
-  }
+      <div class="divider"></div>
 
-  function rerender(){
-    const state = loadState();
-    elScenario.value = state.incomeScenario;
-    elRedLine.value = state.redLine;
-    elStartCash.value = state.startingCash;
-    elReserve.value = state.reserveFlag;
+      <div class="twoCol">
+        <div class="card">
+          <h3>План расходов по категориям (если нет Excel)</h3>
+          <div class="row">
+            <label>Категория расхода
+              <input id="planCatName" placeholder="например: Еда" />
+            </label>
+            <label>План/мес (₽)
+              <input id="planCatAmt" type="number" value="0" />
+            </label>
+            <button id="addPlanCat" class="primary">Добавить/обновить</button>
+          </div>
 
-    renderWeeks(state);
-    renderGoals(state);
-    renderIndicators(state);
-    renderCharts(state);
-  }
+          <div style="margin-top:12px; overflow:auto;">
+            <table id="planTable">
+              <thead><tr><th>Категория</th><th>План/мес</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
 
-  // --- Events ---
-  elScenario.addEventListener("change", () => {
-    const st = loadState();
-    st.incomeScenario = +elScenario.value;
-    saveState(st);
-    rerender();
-  });
-  elRedLine.addEventListener("change", () => {
-    const st = loadState();
-    st.redLine = +elRedLine.value;
-    saveState(st);
-    rerender();
-  });
-  elStartCash.addEventListener("change", () => {
-    const st = loadState();
-    st.startingCash = +elStartCash.value;
-    saveState(st);
-    rerender();
-  });
-  elReserve.addEventListener("change", () => {
-    const st = loadState();
-    st.reserveFlag = elReserve.value;
-    saveState(st);
-    rerender();
-  });
+        <div class="card">
+          <h3>Справочник категорий доходов</h3>
+          <div class="note">Категории доходов используются для структуры доходов и прогнозов.</div>
+          <div class="row" style="margin-top:10px;">
+            <label>Категория дохода
+              <input id="incCatName" placeholder="например: Зарплата" />
+            </label>
+            <button id="addIncCat" class="primary">Добавить</button>
+          </div>
+          <div style="margin-top:12px; overflow:auto;">
+            <table id="incCatsTable">
+              <thead><tr><th>Категория дохода</th><th></th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-  elAdd.addEventListener("click", () => {
-    const weekId = (elWeekId.value || "").trim();
-    if (!weekId) return alert("Укажи weekId, например 2026-W01");
+      <div class="divider"></div>
 
-    const st = loadState();
-    const item = {
-      weekId,
-      month: elMonth.value,
-      income: +elIncome.value || 0,
-      expense: +elExpense.value || 0,
-      note: elNote.value || ""
+      <div class="note">
+        <b>Экспорт Excel обновит:</b>
+        <ul>
+          <li>«Еженедельный ввод» — из недель сайта</li>
+          <li>«Цели и накопления» — накоплено по целям</li>
+          <li>Добавит «Операции» — для структуры расходов/доходов</li>
+          <li>Добавит «План (сайт)» и «Категории дохода (сайт)»</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+<script>
+/* =========================
+   STORAGE & MODEL
+========================= */
+const KEY = "fin2026_site_v3";
+
+const months = ["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const monthIndex = m => months.indexOf(m);
+
+function isoWeek(date){
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  const y = d.getUTCFullYear();
+  return `${y}-W${String(weekNo).padStart(2,"0")}`;
+}
+function fmt(n){ return (Math.round(n||0)).toLocaleString("ru-RU") + " ₽"; }
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+const LEVELS = [
+  { level:0, name:"Старт", joyLimit:0,  rule:"Только базовые траты. Радость запрещена." },
+  { level:1, name:"Щит", joyLimit:5000, rule:"Можно 1 радость ≤ 5k/мес (строго внутри лимита)." },
+  { level:2, name:"Рельсы", joyLimit:10000, rule:"Плановые радости ≤ 10k/мес." },
+  { level:3, name:"Накопление I", joyLimit:15000, rule:"Радость ≤ 15k/мес + всё по лимитам категорий." },
+  { level:4, name:"Накопление II", joyLimit:20000, rule:"Комфортный режим ≤ 20k/мес." },
+  { level:5, name:"Свобода", joyLimit:30000, rule:"Радость ≤ 30k/мес (но красная линия всё равно важна)." },
+];
+
+const defaults = {
+  redLine: 300000,
+  startCash: 1000000,
+  scenarioIncome: 160000,
+  reserveFlag: "no",
+  excelMeta: null,
+  tx: [],  // {id, date, type, cat, subcat, amount, note}
+  weeks: [], // {weekId, month, income, expense}
+  plan: {
+    "Жильё и связь": 56500,
+    "Авто": 19000,
+    "Еда": 30400,
+    "Медицина и услуги": 5500,
+    "Транспорт": 4200,
+    "Одежда / быт": 12300,
+    "Развлечения": 3300,
+    "Радость": 0,
+    "Долг (ремонт)": 42000,
+  },
+  incomeCats: ["Зарплата","Проекты","Разовые","Подарки/возвраты","Другое"],
+  goals: [
+    { name:"Страховка автомобиля", amount:80000, due:"2026-03-15", start:"2026-01-01", saved:0, priority:"Высокий" },
+    { name:"ТО автомобиля", amount:50000, due:"2026-06-15", start:"2026-04-01", saved:0, priority:"Высокий" },
+    { name:"Отпуск в Грузии", amount:150000, due:"2026-06-20", start:"2026-04-01", saved:0, priority:"Средний" },
+    { name:"День рождения Поли", amount:100000, due:"2026-10-10", start:"2026-07-01", saved:0, priority:"Высокий" },
+    { name:"Отпуск в Японии", amount:400000, due:"2026-10-20", start:"2026-07-01", saved:0, priority:"Средний" },
+    { name:"Подарки на Новый год", amount:100000, due:"2026-12-20", start:"2026-11-01", saved:0, priority:"Средний" },
+  ],
+  excelBinary: null,
+};
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(!raw) return structuredClone(defaults);
+    const s = JSON.parse(raw);
+    return {
+      ...structuredClone(defaults),
+      ...s,
+      plan: { ...structuredClone(defaults.plan), ...(s.plan||{}) },
+      incomeCats: Array.isArray(s.incomeCats) ? s.incomeCats : structuredClone(defaults.incomeCats),
     };
+  }catch{
+    return structuredClone(defaults);
+  }
+}
+function saveState(s){ localStorage.setItem(KEY, JSON.stringify(s)); }
 
-    const idx = st.weeks.findIndex(x => x.weekId === weekId);
-    if (idx >= 0) st.weeks[idx] = item;
-    else st.weeks.push(item);
+/* =========================
+   Tabs
+========================= */
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    btn.classList.add("active");
+    const v = btn.dataset.view;
+    document.getElementById("view-pult").classList.toggle("hidden", v!=="pult");
+    document.getElementById("view-dash").classList.toggle("hidden", v!=="dash");
+    document.getElementById("view-settings").classList.toggle("hidden", v!=="settings");
+    if(v==="dash") recalcDashboard();
+    renderAll();
+  });
+});
 
-    saveState(st);
-    rerender();
+/* =========================
+   Selects fill
+========================= */
+const elTxCat = document.getElementById("txCat");
+const elWkMonth = document.getElementById("wkMonth");
+const elGoalMonth = document.getElementById("goalMonth");
+
+months.forEach(m=>{
+  const o = document.createElement("option"); o.textContent=m; elWkMonth.appendChild(o);
+  const o2 = document.createElement("option"); o2.textContent=m; elGoalMonth.appendChild(o2);
+});
+elGoalMonth.value = months[new Date().getMonth()];
+
+function renderCatOptions(){
+  const s = loadState();
+  const txType = document.getElementById("txType").value;
+  elTxCat.innerHTML = "";
+
+  if(txType==="income"){
+    s.incomeCats.forEach(c=>{
+      const o=document.createElement("option"); o.value=c; o.textContent=c; elTxCat.appendChild(o);
+    });
+  } else {
+    Object.keys(s.plan).forEach(c=>{
+      const o=document.createElement("option"); o.value=c; o.textContent=c; elTxCat.appendChild(o);
+    });
+  }
+}
+document.getElementById("txType").addEventListener("change", renderCatOptions);
+renderCatOptions();
+
+/* =========================
+   Transactions
+========================= */
+const txDate = document.getElementById("txDate");
+txDate.value = new Date().toISOString().slice(0,10);
+
+document.getElementById("addTx").addEventListener("click", ()=>{
+  const s = loadState();
+  const d = txDate.value;
+  if(!d) return alert("Укажи дату");
+
+  const type = document.getElementById("txType").value;
+  const cat = document.getElementById("txCat").value || (type==="income" ? "Другое":"Другое");
+  const subcat = (document.getElementById("txSubcat").value || "").trim();
+  const amount = +document.getElementById("txAmount").value || 0;
+  if(amount<=0) return alert("Сумма должна быть > 0");
+  const note = (document.getElementById("txNote").value || "").trim();
+
+  s.tx.unshift({ id: uid(), date:d, type, cat, subcat, amount, note });
+
+  // auto week recompute
+  const dt = new Date(d+"T00:00:00");
+  const weekId = isoWeek(dt);
+  const month = months[dt.getMonth()];
+  upsertWeekFromTx(s, weekId, month);
+
+  saveState(s);
+  renderAll();
+});
+
+function upsertWeekFromTx(state, weekId, month){
+  const weekTx = state.tx.filter(t=> isoWeek(new Date(t.date+"T00:00:00")) === weekId);
+  const income = weekTx.filter(t=>t.type==="income").reduce((a,b)=>a+b.amount,0);
+  const expense = weekTx.filter(t=>t.type==="expense").reduce((a,b)=>a+b.amount,0);
+  const idx = state.weeks.findIndex(w=>w.weekId===weekId);
+  const item = { weekId, month, income, expense };
+  if(idx>=0) state.weeks[idx]=item;
+  else state.weeks.push(item);
+}
+
+/* =========================
+   Weeks manual
+========================= */
+document.getElementById("addWeek").addEventListener("click", ()=>{
+  const s = loadState();
+  const weekId = (document.getElementById("wkId").value || "").trim();
+  if(!weekId) return alert("Укажи weekId, например 2026-W05");
+  const month = document.getElementById("wkMonth").value;
+  const income = +document.getElementById("wkIncome").value || 0;
+  const expense = +document.getElementById("wkExpense").value || 0;
+  const idx = s.weeks.findIndex(w=>w.weekId===weekId);
+  const item = { weekId, month, income, expense };
+  if(idx>=0) s.weeks[idx]=item; else s.weeks.push(item);
+  saveState(s);
+  renderAll();
+});
+
+/* =========================
+   Goals
+========================= */
+function daysLeft(due){
+  const now = new Date();
+  const dt = new Date(due+"T00:00:00");
+  return Math.ceil((dt - now) / 86400000);
+}
+function renderGoals(){
+  const s = loadState();
+  const wrap = document.getElementById("goalsWrap");
+  wrap.innerHTML = "";
+
+  s.goals.forEach((g, i)=>{
+    const left = Math.max(0, g.amount - (g.saved||0));
+    const pct = Math.min(100, Math.round(((g.saved||0) / g.amount) * 100));
+    const dl = daysLeft(g.due);
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.margin = "10px 0";
+
+    card.innerHTML = `
+      <div class="row" style="justify-content:space-between;">
+        <div>
+          <div style="font-weight:950;">${g.name}</div>
+          <div class="muted">Нужно: <span class="mono">${fmt(g.amount)}</span> · Накоплено: <b class="mono">${fmt(g.saved||0)}</b> · Осталось: <b class="mono">${fmt(left)}</b></div>
+          <div class="muted">Дедлайн: <b>${g.due}</b> · Осталось дней: <b>${dl}</b> · Приоритет: <b>${g.priority||"—"}</b></div>
+        </div>
+        <div class="pill ${left===0 ? "ok":"bad"}">${left===0 ? "Закрыта":"Открыта"}</div>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="progress"><div class="bar" style="width:${pct}%;"></div></div>
+        <div class="row" style="margin-top:10px;">
+          <label>Накоплено (ввод)
+            <input data-goal="${i}" class="goalSaved" type="number" value="${g.saved||0}" />
+          </label>
+        </div>
+      </div>
+    `;
+    wrap.appendChild(card);
   });
 
-  elReset.addEventListener("click", () => {
-    if (!confirm("Сбросить все данные?")) return;
-    localStorage.removeItem(STORAGE_KEY);
-    rerender();
+  document.querySelectorAll(".goalSaved").forEach(inp=>{
+    inp.addEventListener("change", (e)=>{
+      const s = loadState();
+      const i = +e.target.dataset.goal;
+      s.goals[i].saved = +e.target.value || 0;
+      saveState(s);
+      renderAll();
+    });
+  });
+}
+
+/* =========================
+   Goal calendar monthly plan
+========================= */
+function monthsBetween(a,b){
+  // inclusive months between start (a) and month before due (b)
+  const start = new Date(a+"T00:00:00");
+  const due = new Date(b+"T00:00:00");
+  const sM = start.getFullYear()*12 + start.getMonth();
+  const dM = due.getFullYear()*12 + due.getMonth();
+  const count = Math.max(1, dM - sM); // copy before due month
+  return count;
+}
+function goalMonthlyNeed(goal){
+  const m = monthsBetween(goal.start, goal.due);
+  return Math.round(goal.amount / m);
+}
+function monthKeyFromDateStr(d){
+  const dt = new Date(d+"T00:00:00");
+  return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}`;
+}
+function monthKeyByName(monthName){
+  // assumes 2026 for planning
+  const mi = monthIndex(monthName);
+  return `2026-${String(mi+1).padStart(2,"0")}`;
+}
+function renderGoalsMonthPlan(){
+  const s = loadState();
+  const mName = document.getElementById("goalMonth").value;
+  const mKey = monthKeyByName(mName);
+  const mi = monthIndex(mName);
+
+  const list = [];
+  let total = 0;
+
+  for(const g of s.goals){
+    const start = new Date(g.start+"T00:00:00");
+    const due = new Date(g.due+"T00:00:00");
+    const thisMonth = new Date(2026, mi, 1);
+    // include if thisMonth is >= startMonth and < dueMonth
+    const startMonth = new Date(start.getFullYear(), start.getMonth(), 1);
+    const dueMonth = new Date(due.getFullYear(), due.getMonth(), 1);
+    if(thisMonth >= startMonth && thisMonth < dueMonth){
+      const need = goalMonthlyNeed(g);
+      total += need;
+      list.push({name:g.name, need});
+    }
+  }
+
+  const box = document.getElementById("goalsMonthPlan");
+  if(!list.length){
+    box.innerHTML = `<div class="okbox"><b>В ${mName}</b> нет обязательных накоплений по целям (по текущим датам старт/дедлайн).</div>`;
+    return;
+  }
+
+  const items = list.map(x=>`<tr><td>${x.name}</td><td class="mono"><b>${fmt(x.need)}</b></td></tr>`).join("");
+  box.innerHTML = `
+    <div class="warn">
+      <div><b>В ${mName} нужно отложить на цели:</b> <span class="mono"><b>${fmt(total)}</b></span></div>
+      <div class="note">Это “плановый темп”, чтобы дедлайны закрылись без рывков.</div>
+    </div>
+    <div style="margin-top:10px; overflow:auto;">
+      <table>
+        <thead><tr><th>Цель</th><th>План/мес</th></tr></thead>
+        <tbody>${items}</tbody>
+      </table>
+    </div>
+  `;
+}
+document.getElementById("recalcGoalsMonth").addEventListener("click", renderGoalsMonthPlan);
+
+/* =========================
+   Aggregations
+========================= */
+function aggregateByMonth(s){
+  const arr = months.map(m=>({month:m, income:0, expense:0, any:false}));
+  if(s.tx.length){
+    s.tx.forEach(t=>{
+      const dt = new Date(t.date+"T00:00:00");
+      const m = months[dt.getMonth()];
+      const x = arr[monthIndex(m)];
+      x.any = true;
+      if(t.type==="income") x.income += t.amount; else x.expense += t.amount;
+    });
+    return arr;
+  }
+  s.weeks.forEach(w=>{
+    const x = arr[monthIndex(w.month)];
+    x.any = true;
+    x.income += (w.income||0);
+    x.expense += (w.expense||0);
+  });
+  return arr;
+}
+function quarterOfMonth(mIdx){ return Math.floor(mIdx/3)+1; }
+function aggregateByQuarter(s){
+  const q = [1,2,3,4].map(k=>({q:k, income:0, expense:0}));
+  const byM = aggregateByMonth(s);
+  byM.forEach((m,i)=>{
+    const qi = quarterOfMonth(i)-1;
+    q[qi].income += m.income;
+    q[qi].expense += m.expense;
+  });
+  return q;
+}
+function aggregateByYear(s){
+  const byM = aggregateByMonth(s);
+  return {
+    income: byM.reduce((a,b)=>a+b.income,0),
+    expense: byM.reduce((a,b)=>a+b.expense,0),
+  };
+}
+
+/* =========================
+   Joy detection + monthly joy limit
+========================= */
+function isJoyTx(t){
+  const cat = (t.cat||"").toLowerCase();
+  const sub = (t.subcat||"").toLowerCase();
+  if(cat === "радость") return true;
+  return ["радост","развлеч","хобби","кафе","доставка","кино","бар","подар"].some(k => sub.includes(k));
+}
+function monthOfTx(t){
+  const dt = new Date(t.date+"T00:00:00");
+  return months[dt.getMonth()];
+}
+function joySpentInMonth(s, monthName){
+  if(!s.tx.length) return 0;
+  return s.tx
+    .filter(t=>t.type==="expense" && monthOfTx(t)===monthName && isJoyTx(t))
+    .reduce((a,b)=>a+b.amount,0);
+}
+
+/* =========================
+   Motivation level + can/can't
+========================= */
+function computeCash(s){
+  const txNet = s.tx.reduce((acc,t)=> acc + (t.type==="income"?t.amount:-t.amount), 0);
+  const wkNet = (s.tx.length===0) ? s.weeks.reduce((a,w)=>a + (w.income - w.expense),0) : 0;
+  return (s.startCash||0) + txNet + wkNet;
+}
+function computeLevel(s){
+  // Level triggers are "behavior & goals", not income.
+  const filledWeeks = s.weeks.filter(w => (w.income+w.expense)>0).length;
+  const has4Weeks = filledWeeks >= 4;
+
+  const g = s.goals;
+  const closed = idx => (g[idx]?.amount - (g[idx]?.saved||0))<=0;
+
+  const insClosed = closed(0);
+  const toClosed = closed(1);
+  const geoClosed = closed(2);
+  const poliClosed = closed(3);
+  const jpClosed = closed(4);
+
+  const byM = aggregateByMonth(s);
+  const nonNegMonths = byM.filter(x => x.any && (x.income - x.expense) >= 0).length;
+
+  if(!has4Weeks) return LEVELS[0];
+  if(has4Weeks && !insClosed) return LEVELS[0];
+  if(insClosed && !(toClosed && geoClosed)) return LEVELS[1];
+  if(toClosed && geoClosed && nonNegMonths < 2) return LEVELS[2];
+  if(nonNegMonths >= 2 && !(poliClosed && jpClosed)) return LEVELS[3];
+  if(poliClosed && jpClosed && s.reserveFlag!=="yes") return LEVELS[4];
+  if(s.reserveFlag==="yes") return LEVELS[5];
+  return LEVELS[0];
+}
+function canSpend(s){
+  const cash = computeCash(s);
+  const mName = months[new Date().getMonth()];
+  const lvl = computeLevel(s);
+  const joySpent = joySpentInMonth(s, mName);
+  const joyOk = joySpent <= lvl.joyLimit;
+
+  const okCash = cash >= (s.redLine||0);
+
+  // Spend allowed if cash ok AND joy within limit (for expenses that are joy)
+  return { okCash, okJoy: joyOk, cash, joySpent, joyLimit: lvl.joyLimit, level:lvl };
+}
+
+/* =========================
+   Tables render
+========================= */
+function renderTxTable(){
+  const s = loadState();
+  const tb = document.querySelector("#txTable tbody");
+  tb.innerHTML = "";
+  s.tx.forEach(t=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="mono">${t.date}</td>
+      <td>${t.type==="expense" ? "Расход":"Доход"}</td>
+      <td>${t.cat}</td>
+      <td>${t.subcat||""}</td>
+      <td class="mono" style="font-weight:950;">${fmt(t.amount)}</td>
+      <td>${t.note||""}</td>
+      <td><button data-del="${t.id}">Удалить</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const s = loadState();
+      const id = btn.dataset.del;
+      s.tx = s.tx.filter(x=>x.id!==id);
+      saveState(s);
+      renderAll();
+    });
+  });
+}
+function renderWeeksTable(){
+  const s = loadState();
+  const tb = document.querySelector("#wkTable tbody");
+  tb.innerHTML = "";
+  [...s.weeks].sort((a,b)=>a.weekId.localeCompare(b.weekId)).forEach(w=>{
+    const bal = (w.income||0) - (w.expense||0);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${w.weekId}</td><td>${w.month}</td>
+      <td class="mono">${fmt(w.income||0)}</td>
+      <td class="mono">${fmt(w.expense||0)}</td>
+      <td class="mono" style="font-weight:950;">${fmt(bal)}</td>
+      <td><button data-del="${w.weekId}">Удалить</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const s = loadState();
+      const id = btn.dataset.del;
+      s.weeks = s.weeks.filter(x=>x.weekId!==id);
+      saveState(s);
+      renderAll();
+    });
+  });
+}
+function renderPlanTable(){
+  const s = loadState();
+  const tb = document.querySelector("#planTable tbody");
+  tb.innerHTML = "";
+  Object.entries(s.plan).sort().forEach(([k,v])=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${k}</td>
+      <td class="mono">${fmt(v)}</td>
+      <td><button data-del="${k}">Удалить</button></td>
+    `;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const s = loadState();
+      delete s.plan[btn.dataset.del];
+      saveState(s);
+      renderCatOptions();
+      renderAll();
+    });
+  });
+}
+function renderIncomeCatsTable(){
+  const s = loadState();
+  const tb = document.querySelector("#incCatsTable tbody");
+  tb.innerHTML = "";
+  s.incomeCats.forEach(c=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML = `<td>${c}</td><td><button data-del="${c}">Удалить</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("button[data-del]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const s = loadState();
+      const name = btn.dataset.del;
+      s.incomeCats = s.incomeCats.filter(x=>x!==name);
+      saveState(s);
+      renderCatOptions();
+      renderAll();
+    });
+  });
+}
+
+/* =========================
+   KPI render
+========================= */
+function renderKPI(){
+  const s = loadState();
+  document.getElementById("redLine").value = s.redLine;
+  document.getElementById("startCash").value = s.startCash;
+  document.getElementById("scenario").value = s.scenarioIncome;
+  document.getElementById("reserveFlag").value = s.reserveFlag;
+
+  const r = canSpend(s);
+  const pill = document.getElementById("kpiCan");
+
+  document.getElementById("kpiCash").textContent = fmt(r.cash);
+  document.getElementById("kpiLevel").textContent = `${r.level.level} — ${r.level.name}`;
+  document.getElementById("kpiJoyRule").textContent = `Лимит радости: ${fmt(r.level.joyLimit)} / мес · Правило: ${r.level.rule}`;
+
+  const reasons = [];
+  if(!r.okCash) reasons.push(`Остаток ниже красной линии ${fmt(s.redLine)}`);
+  if(!r.okJoy) reasons.push(`Радость превышает лимит (${fmt(r.joySpent)} > ${fmt(r.joyLimit)})`);
+
+  const ok = r.okCash && r.okJoy;
+  pill.className = "pill " + (ok ? "ok":"bad");
+  pill.textContent = ok ? "МОЖНО" : "НЕЛЬЗЯ";
+  document.getElementById("kpiCanReason").textContent = reasons.length ? reasons.join(" · ") : "В рамках правил.";
+
+  // joy KPI (current month)
+  const mName = months[new Date().getMonth()];
+  document.getElementById("joySpent").textContent = fmt(r.joySpent);
+  document.getElementById("joyLimit").textContent = fmt(r.joyLimit);
+  document.getElementById("joyLeft").textContent = fmt(Math.max(0, r.joyLimit - r.joySpent));
+
+  const joySignal = document.getElementById("joySignal");
+  if(r.joyLimit===0){
+    joySignal.innerHTML = `<div class="warn"><b>Радость запрещена на уровне ${r.level.name}.</b> Закрой страховку → появится лимит.</div>`;
+  } else if(r.okJoy){
+    joySignal.innerHTML = `<div class="okbox"><b>ОК</b> — ты в лимите радости за ${mName}.</div>`;
+  } else {
+    joySignal.innerHTML = `<div class="warn"><b>СТОП</b> — лимит радости превышен за ${mName}.</div>`;
+  }
+}
+
+document.getElementById("redLine").addEventListener("change", ()=>{
+  const s=loadState(); s.redLine=+document.getElementById("redLine").value||0; saveState(s); renderAll();
+});
+document.getElementById("startCash").addEventListener("change", ()=>{
+  const s=loadState(); s.startCash=+document.getElementById("startCash").value||0; saveState(s); renderAll();
+});
+document.getElementById("scenario").addEventListener("change", ()=>{
+  const s=loadState(); s.scenarioIncome=+document.getElementById("scenario").value||0; saveState(s); renderAll();
+});
+document.getElementById("reserveFlag").addEventListener("change", ()=>{
+  const s=loadState(); s.reserveFlag=document.getElementById("reserveFlag").value; saveState(s); renderAll();
+});
+
+/* =========================
+   DASH: period selectors
+========================= */
+const periodNow = document.getElementById("periodNow");
+const periodPrev = document.getElementById("periodPrev");
+const mode = document.getElementById("mode");
+const rangeRow = document.getElementById("rangeRow");
+
+function fillPeriods(){
+  const s=loadState();
+  const m=mode.value;
+  periodNow.innerHTML=""; periodPrev.innerHTML="";
+  if(m==="week"){
+    const ids=[...new Set(s.weeks.map(w=>w.weekId))].sort();
+    ids.forEach(id=>{
+      const o=document.createElement("option"); o.value=id; o.textContent=id; periodNow.appendChild(o);
+      const o2=document.createElement("option"); o2.value=id; o2.textContent=id; periodPrev.appendChild(o2);
+    });
+    rangeRow.style.display="none";
+  } else if(m==="month"){
+    months.forEach(mm=>{
+      const o=document.createElement("option"); o.value=mm; o.textContent=mm; periodNow.appendChild(o);
+      const o2=document.createElement("option"); o2.value=mm; o2.textContent=mm; periodPrev.appendChild(o2);
+    });
+    periodNow.value = months[new Date().getMonth()];
+    periodPrev.value = months[Math.max(0,new Date().getMonth()-1)];
+    rangeRow.style.display="none";
+  } else if(m==="quarter"){
+    ["Q1","Q2","Q3","Q4"].forEach(q=>{
+      const o=document.createElement("option"); o.value=q; o.textContent=q; periodNow.appendChild(o);
+      const o2=document.createElement("option"); o2.value=q; o2.textContent=q; periodPrev.appendChild(o2);
+    });
+    rangeRow.style.display="none";
+  } else if(m==="year"){
+    ["2026","2025"].forEach(y=>{
+      const o=document.createElement("option"); o.value=y; o.textContent=y; periodNow.appendChild(o);
+      const o2=document.createElement("option"); o2.value=y; o2.textContent=y; periodPrev.appendChild(o2);
+    });
+    rangeRow.style.display="none";
+  } else if(m==="range"){
+    periodNow.innerHTML = `<option value="custom">Выбранный диапазон</option>`;
+    periodPrev.innerHTML = `<option value="auto">Авто (предыдущий такой же)</option>`;
+    rangeRow.style.display="flex";
+  }
+}
+mode.addEventListener("change", ()=>{
+  fillPeriods();
+  rangeRow.style.display = (mode.value==="range") ? "flex" : "none";
+});
+
+/* =========================
+   DASH: bounds & sums
+========================= */
+function sumTxBetween(s, from, to){
+  const f = new Date(from+"T00:00:00");
+  const t = new Date(to+"T23:59:59");
+  let inc=0, exp=0;
+  if(s.tx.length){
+    for(const x of s.tx){
+      const d = new Date(x.date+"T00:00:00");
+      if(d>=f && d<=t){
+        if(x.type==="income") inc+=x.amount;
+        else exp+=x.amount;
+      }
+    }
+  } else {
+    const y = aggregateByYear(s);
+    inc=y.income; exp=y.expense;
+  }
+  return {inc, exp};
+}
+function periodBoundsFromMode(s, m, value){
+  if(m==="week"){
+    const txWeek = s.tx.filter(t=> isoWeek(new Date(t.date+"T00:00:00"))===value);
+    if(txWeek.length){
+      const dates = txWeek.map(t=>t.date).sort();
+      return {from:dates[0], to:dates[dates.length-1]};
+    }
+    return null;
+  }
+  if(m==="month"){
+    const year = 2026;
+    const mi = monthIndex(value);
+    const from = new Date(year, mi, 1);
+    const to = new Date(year, mi+1, 0);
+    return {from: from.toISOString().slice(0,10), to: to.toISOString().slice(0,10)};
+  }
+  if(m==="quarter"){
+    const year = 2026;
+    const q = +value.replace("Q","");
+    const mi = (q-1)*3;
+    const from = new Date(year, mi, 1);
+    const to = new Date(year, mi+3, 0);
+    return {from: from.toISOString().slice(0,10), to: to.toISOString().slice(0,10)};
+  }
+  if(m==="year"){
+    const year = +value;
+    const from = new Date(year,0,1);
+    const to = new Date(year,11,31);
+    return {from: from.toISOString().slice(0,10), to: to.toISOString().slice(0,10)};
+  }
+  return null;
+}
+function linearForecast(points){
+  const n=points.length;
+  if(n<2) return points[0]?.y || 0;
+  let sumX=0,sumY=0,sumXY=0,sumXX=0;
+  for(const p of points){ sumX+=p.x; sumY+=p.y; sumXY+=p.x*p.y; sumXX+=p.x*p.x; }
+  const denom = (n*sumXX - sumX*sumX) || 1;
+  const a = (n*sumXY - sumX*sumY) / denom;
+  const b = (sumY - a*sumX) / n;
+  return a*n + b;
+}
+function structureForBounds(s, bounds, type){
+  const res = {};
+  if(!bounds || !s.tx.length) return res;
+  const f = new Date(bounds.from+"T00:00:00");
+  const t = new Date(bounds.to+"T23:59:59");
+  for(const x of s.tx){
+    const d = new Date(x.date+"T00:00:00");
+    if(d<f || d>t) continue;
+    if(type && x.type!==type) continue;
+    const k = x.cat || "Другое";
+    res[k] = (res[k]||0) + x.amount;
+  }
+  return res;
+}
+
+let chartLine=null, chartDonutExp=null, chartDonutInc=null, chartLimits=null, chartGoals=null;
+
+function recalcDashboard(){
+  const s = loadState();
+  fillPeriods();
+
+  const m = mode.value;
+  const now = periodNow.value;
+  const prev = periodPrev.value;
+
+  let nowBounds, prevBounds;
+  if(m==="range"){
+    const from = document.getElementById("rangeFrom").value;
+    const to = document.getElementById("rangeTo").value;
+    if(!from || !to) return alert("Укажи даты диапазона");
+    nowBounds = {from, to};
+    const lenDays = Math.max(1, Math.ceil((new Date(to)-new Date(from))/86400000)+1);
+    const prevTo = new Date(from+"T00:00:00"); prevTo.setDate(prevTo.getDate()-1);
+    const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate()-(lenDays-1));
+    prevBounds = {from: prevFrom.toISOString().slice(0,10), to: prevTo.toISOString().slice(0,10)};
+  } else {
+    nowBounds = periodBoundsFromMode(s, m, now);
+    prevBounds = periodBoundsFromMode(s, m, prev);
+  }
+
+  if(m==="week" && (!nowBounds || !prevBounds)){
+    // still render month charts; but week compare not accurate without tx dates
+  }
+
+  const nowSum = nowBounds ? sumTxBetween(s, nowBounds.from, nowBounds.to) : {inc:0, exp:0};
+  const prevSum = prevBounds ? sumTxBetween(s, prevBounds.from, prevBounds.to) : {inc:0, exp:0};
+
+  const nowBal = nowSum.inc - nowSum.exp;
+  const prevBal = prevSum.inc - prevSum.exp;
+
+  const delta = (a,b)=> (b===0 ? (a===0?0:1) : (a-b)/Math.abs(b));
+  const pct = v => (v*100).toFixed(1)+"%";
+
+  document.getElementById("kpiExp").textContent = fmt(nowSum.exp);
+  document.getElementById("kpiInc").textContent = fmt(nowSum.inc);
+  document.getElementById("kpiBal").textContent = fmt(nowBal);
+
+  document.getElementById("kpiExpDelta").textContent = `к пред. периоду: ${fmt(prevSum.exp)} · Δ ${pct(delta(nowSum.exp, prevSum.exp))}`;
+  document.getElementById("kpiIncDelta").textContent = `к пред. периоду: ${fmt(prevSum.inc)} · Δ ${pct(delta(nowSum.inc, prevSum.inc))}`;
+  document.getElementById("kpiBalDelta").textContent = `к пред. периоду: ${fmt(prevBal)} · Δ ${pct(delta(nowBal, prevBal))}`;
+
+  // Forecast
+  const method = document.getElementById("forecastMethod").value;
+  let fcInc=0, fcExp=0;
+
+  if(m==="month"){
+    const seq = aggregateByMonth(s).map(x=>({inc:x.income, exp:x.expense})).filter(x=> (x.inc+x.exp)>0);
+    const N = Math.min(6, seq.length);
+    const tail = seq.slice(-N);
+    if(tail.length){
+      if(method==="avg"){
+        fcInc = tail.reduce((a,b)=>a+b.inc,0)/tail.length;
+        fcExp = tail.reduce((a,b)=>a+b.exp,0)/tail.length;
+      } else {
+        fcInc = linearForecast(tail.map((p,i)=>({x:i,y:p.inc})));
+        fcExp = linearForecast(tail.map((p,i)=>({x:i,y:p.exp})));
+      }
+    }
+  } else if(m==="quarter"){
+    const seq = aggregateByQuarter(s).map(x=>({inc:x.income, exp:x.expense})).filter(x=> (x.inc+x.exp)>0);
+    const N = Math.min(4, seq.length);
+    const tail = seq.slice(-N);
+    if(tail.length){
+      if(method==="avg"){
+        fcInc = tail.reduce((a,b)=>a+b.inc,0)/tail.length;
+        fcExp = tail.reduce((a,b)=>a+b.exp,0)/tail.length;
+      } else {
+        fcInc = linearForecast(tail.map((p,i)=>({x:i,y:p.inc})));
+        fcExp = linearForecast(tail.map((p,i)=>({x:i,y:p.exp})));
+      }
+    }
+  } else if(m==="week"){
+    const weeks = [...new Set(s.tx.map(t=> isoWeek(new Date(t.date+"T00:00:00"))))].sort();
+    const N = Math.min(8, weeks.length);
+    const tail = weeks.slice(-N).map(wid=>{
+      let inc=0, exp=0;
+      s.tx.forEach(t=>{
+        if(isoWeek(new Date(t.date+"T00:00:00"))===wid){
+          if(t.type==="income") inc+=t.amount; else exp+=t.amount;
+        }
+      });
+      return {inc, exp};
+    });
+    if(tail.length){
+      if(method==="avg"){
+        fcInc = tail.reduce((a,b)=>a+b.inc,0)/tail.length;
+        fcExp = tail.reduce((a,b)=>a+b.exp,0)/tail.length;
+      } else {
+        fcInc = linearForecast(tail.map((p,i)=>({x:i,y:p.inc})));
+        fcExp = linearForecast(tail.map((p,i)=>({x:i,y:p.exp})));
+      }
+    }
+  } else {
+    const y = aggregateByYear(s);
+    fcInc = y.income; fcExp = y.expense;
+  }
+
+  document.getElementById("kpiFc").textContent = `Доход: ${fmt(fcInc)} · Расход: ${fmt(fcExp)}`;
+
+  // Monthly line chart
+  const byM = aggregateByMonth(s);
+  const labels = byM.map(x=>x.month);
+  const inc = byM.map(x=>x.income);
+  const exp = byM.map(x=>x.expense);
+
+  if(chartLine) chartLine.destroy();
+  chartLine = new Chart(document.getElementById("chartLine"),{
+    type:"line",
+    data:{ labels, datasets:[
+      { label:"Доход (факт)", data:inc },
+      { label:"Расход (факт)", data:exp },
+      { label:"Баланс", data: inc.map((v,i)=> v-exp[i]) },
+    ]},
+    options:{ responsive:true, interaction:{mode:"index", intersect:false},
+      scales:{ y:{ ticks:{ callback:v=> v.toLocaleString("ru-RU") } } } }
   });
 
-  // init
-  rerender();
+  // Expense structure donut
+  const expMap = structureForBounds(s, nowBounds, "expense");
+  const expKeys = Object.keys(expMap);
+  const expVals = expKeys.map(k=>expMap[k]);
+
+  if(chartDonutExp) chartDonutExp.destroy();
+  chartDonutExp = new Chart(document.getElementById("chartDonutExp"),{
+    type:"doughnut",
+    data:{ labels: expKeys.length?expKeys:["Нет данных (вноси операции)"], datasets:[{ data: expKeys.length?expVals:[1] }] },
+    options:{ responsive:true }
+  });
+
+  // Income structure donut
+  const incMap = structureForBounds(s, nowBounds, "income");
+  const incKeys = Object.keys(incMap);
+  const incVals = incKeys.map(k=>incMap[k]);
+
+  if(chartDonutInc) chartDonutInc.destroy();
+  chartDonutInc = new Chart(document.getElementById("chartDonutInc"),{
+    type:"doughnut",
+    data:{ labels: incKeys.length?incKeys:["Нет данных (вноси операции)"], datasets:[{ data: incKeys.length?incVals:[1] }] },
+    options:{ responsive:true }
+  });
+
+  // Limits: plan vs fact (expense)
+  const planCats = Object.keys(s.plan);
+  const planVals = planCats.map(c=>s.plan[c]||0);
+  const factVals = planCats.map(c=>expMap[c]||0);
+  const totalPlan = planVals.reduce((a,b)=>a+b,0);
+  const totalFact = factVals.reduce((a,b)=>a+b,0);
+  const left = totalPlan - totalFact;
+
+  document.getElementById("limitLeft").textContent = fmt(left);
+  const stop = document.getElementById("stopSignal");
+  const ok = left > 0 && canSpend(s).okCash;
+  stop.className = "pill " + (ok ? "ok":"bad");
+  stop.textContent = ok ? "ОК" : "СТОП";
+
+  if(chartLimits) chartLimits.destroy();
+  chartLimits = new Chart(document.getElementById("chartLimits"),{
+    type:"bar",
+    data:{ labels: planCats, datasets:[
+      { label:"План", data: planVals },
+      { label:"Факт", data: factVals },
+    ]},
+    options:{ responsive:true, indexAxis:"y" }
+  });
+
+  // Overspend list
+  const over = planCats
+    .map((c,i)=>({cat:c, plan:planVals[i], fact:factVals[i], diff: factVals[i]-planVals[i]}))
+    .filter(x=>x.diff>0)
+    .sort((a,b)=>b.diff-a.diff);
+
+  const overBox = document.getElementById("overspendList");
+  if(!over.length){
+    overBox.innerHTML = `<div class="okbox"><b>ОК</b> — по категориям перерасхода нет (в выбранном периоде).</div>`;
+  } else {
+    overBox.innerHTML = `
+      <div class="warn"><b>СТОП-лист</b>: категории, где факт выше плана</div>
+      <div style="margin-top:10px; overflow:auto;">
+        <table>
+          <thead><tr><th>Категория</th><th>План</th><th>Факт</th><th>Перерасход</th></tr></thead>
+          <tbody>
+            ${over.map(x=>`
+              <tr>
+                <td>${x.cat}</td>
+                <td class="mono">${fmt(x.plan)}</td>
+                <td class="mono">${fmt(x.fact)}</td>
+                <td class="mono" style="font-weight:950;">${fmt(x.diff)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Goals chart + countdown
+  const gLabels = s.goals.map(g=>g.name);
+  const gSaved = s.goals.map(g=>g.saved||0);
+  const gLeft = s.goals.map(g=>Math.max(0, g.amount-(g.saved||0)));
+
+  if(chartGoals) chartGoals.destroy();
+  chartGoals = new Chart(document.getElementById("chartGoals"),{
+    type:"bar",
+    data:{ labels:gLabels, datasets:[
+      { label:"Накоплено", data:gSaved },
+      { label:"Осталось", data:gLeft },
+    ]},
+    options:{ responsive:true, indexAxis:"y" }
+  });
+
+  document.getElementById("goalsCountdown").innerHTML = s.goals.map(g=>{
+    const dl = daysLeft(g.due);
+    const leftAmt = Math.max(0, g.amount-(g.saved||0));
+    return `• ${g.name}: осталось дней ${dl}, осталось накопить ${fmt(leftAmt)}`;
+  }).join("<br/>");
+}
+
+document.getElementById("recalc").addEventListener("click", recalcDashboard);
+
+/* =========================
+   SETTINGS: plan & income cats
+========================= */
+document.getElementById("addPlanCat").addEventListener("click", ()=>{
+  const s=loadState();
+  const name=(document.getElementById("planCatName").value||"").trim();
+  const amt=+document.getElementById("planCatAmt").value||0;
+  if(!name || amt<=0) return alert("Укажи категорию и план/мес > 0");
+  s.plan[name]=amt;
+  saveState(s);
+  renderCatOptions();
+  renderAll();
+});
+document.getElementById("addIncCat").addEventListener("click", ()=>{
+  const s=loadState();
+  const name=(document.getElementById("incCatName").value||"").trim();
+  if(!name) return alert("Укажи категорию дохода");
+  if(!s.incomeCats.includes(name)) s.incomeCats.push(name);
+  saveState(s);
+  renderCatOptions();
+  renderAll();
+});
+
+/* =========================
+   Excel import/export
+========================= */
+const excelIn = document.getElementById("excelIn");
+excelIn.addEventListener("change", async (e)=>{
+  const file = e.target.files?.[0];
+  if(!file) return;
+  const buf = await file.arrayBuffer();
+  const wb = XLSX.read(buf, {type:"array"});
+  const s = loadState();
+  s.excelBinary = Array.from(new Uint8Array(buf));
+  s.excelMeta = { name:file.name, sheets: wb.SheetNames };
+
+  // Plan from "План расходов 2026"
+  if(wb.Sheets["План расходов 2026"]){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets["План расходов 2026"], {header:1});
+    const plan = {};
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i];
+      if(!r || !r[0]) continue;
+      const cat = String(r[0]).trim();
+      const val = Number(r[1]);
+      if(cat && Number.isFinite(val) && val>0) plan[cat]=val;
+    }
+    if(Object.keys(plan).length) s.plan = {...s.plan, ...plan};
+  }
+
+  // Weekly from "Еженедельный ввод"
+  if(wb.Sheets["Еженедельный ввод"]){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets["Еженедельный ввод"], {header:1});
+    const weeks = [];
+    for(let i=2;i<rows.length;i++){
+      const r = rows[i];
+      if(!r || !r[0]) continue;
+      const weekId = String(r[0]).trim();
+      const month = r[3] ? String(r[3]).trim() : "Январь";
+      const income = Number(r[4]||0);
+      const expense = Number(r[5]||0);
+      if(weekId) weeks.push({weekId, month, income:income||0, expense:expense||0});
+    }
+    if(weeks.length) s.weeks = weeks;
+  }
+
+  // Goals from "Цели и накопления"
+  if(wb.Sheets["Цели и накопления"]){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets["Цели и накопления"], {header:1});
+    const map = new Map();
+    for(let i=2;i<rows.length;i++){
+      const r = rows[i];
+      if(!r || !r[0]) continue;
+      const name = String(r[0]).trim();
+      const saved = Number(r[6]||0);
+      map.set(name, saved);
+    }
+    s.goals = s.goals.map(g=> ({...g, saved: map.has(g.name)? map.get(g.name): (g.saved||0)}));
+  }
+
+  // Operations sheet (if exists)
+  if(wb.Sheets["Операции"]){
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets["Операции"], {header:1});
+    const tx = [];
+    for(let i=1;i<rows.length;i++){
+      const r = rows[i];
+      if(!r || !r[0]) continue;
+      const date = String(r[0]).slice(0,10);
+      const type = String(r[1]||"").trim();
+      const cat = String(r[2]||"").trim();
+      const subcat = String(r[3]||"").trim();
+      const amount = Number(r[4]||0);
+      const note = String(r[5]||"").trim();
+      if(date && (type==="income"||type==="expense") && amount>0){
+        tx.push({id: uid(), date, type, cat:cat||"Другое", subcat, amount, note});
+      }
+    }
+    if(tx.length) s.tx = tx.reverse();
+  }
+
+  saveState(s);
+  renderCatOptions();
+  renderAll();
+  document.getElementById("excelInfo").textContent = `Импортирован: ${s.excelMeta.name}. Листы: ${s.excelMeta.sheets.join(", ")}`;
+});
+
+document.getElementById("exportExcel").addEventListener("click", ()=>{
+  const s = loadState();
+  let wb;
+  if(s.excelBinary){
+    const buf = new Uint8Array(s.excelBinary).buffer;
+    wb = XLSX.read(buf, {type:"array"});
+  } else {
+    wb = XLSX.utils.book_new();
+  }
+
+  function setSheet(name, aoa){
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    wb.Sheets[name] = ws;
+    if(!wb.SheetNames.includes(name)) wb.SheetNames.push(name);
+  }
+
+  // Weekly sheet
+  const wkAoa = [
+    ["Еженедельный ввод факта (доходы и расходы)"],
+    ["Неделя","Дата начала","Дата конца","Месяц","Доход (факт)","Расход (факт)","Комментарий"],
+  ];
+  [...s.weeks].sort((a,b)=>a.weekId.localeCompare(b.weekId)).forEach(w=>{
+    wkAoa.push([w.weekId,"","",w.month,w.income||0,w.expense||0,""]);
+  });
+  setSheet("Еженедельный ввод", wkAoa);
+
+  // Goals sheet
+  const gAoa = [
+    ["Цели 2026 и план накоплений"],
+    ["Цель","Сумма (₽)","Месяц траты","Месяц старта накопления","Месяцев копить","Нужно откладывать/мес (₽)","Накоплено (ввод)","Осталось (₽)","Статус","Приоритет","Комментарий"],
+  ];
+  s.goals.forEach(g=>{
+    const dueM = months[new Date(g.due+"T00:00:00").getMonth()];
+    const startM = months[new Date(g.start+"T00:00:00").getMonth()];
+    const m = Math.max(1, (monthIndex(dueM)-monthIndex(startM)));
+    const need = Math.round(g.amount / m);
+    const left = Math.max(0, g.amount - (g.saved||0));
+    const status = left===0 ? "Закрыта":"Открыта";
+    gAoa.push([g.name,g.amount,dueM,startM,m,need,(g.saved||0),left,status,g.priority||"",""]);
+  });
+  setSheet("Цели и накопления", gAoa);
+
+  // Operations sheet
+  const opAoa = [["Дата","Тип","Категория","Подкатегория","Сумма","Комментарий"]];
+  s.tx.slice().reverse().forEach(t=>{
+    opAoa.push([t.date,t.type,t.cat,t.subcat||"",t.amount,t.note||""]);
+  });
+  setSheet("Операции", opAoa);
+
+  // Plan sheet (site)
+  const planAoa = [["Категория расхода","План в месяц (₽)"]];
+  Object.entries(s.plan).forEach(([k,v])=> planAoa.push([k,v]));
+  setSheet("План (сайт)", planAoa);
+
+  // Income cats sheet
+  const incAoa = [["Категория дохода"]];
+  s.incomeCats.forEach(x=> incAoa.push([x]));
+  setSheet("Категории дохода (сайт)", incAoa);
+
+  XLSX.writeFile(wb, "Финансовый_пульт_2026_сайт.xlsx");
+});
+
+document.getElementById("exportJson").addEventListener("click", ()=>{
+  const s=loadState();
+  const blob = new Blob([JSON.stringify(s,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "fin2026_state.json";
+  a.click();
+});
+document.getElementById("importJson").addEventListener("click", ()=>{
+  const inp = document.createElement("input");
+  inp.type="file"; inp.accept=".json";
+  inp.onchange = async ()=>{
+    const f = inp.files?.[0]; if(!f) return;
+    const obj = JSON.parse(await f.text());
+    saveState({ ...loadState(), ...obj });
+    renderCatOptions();
+    renderAll();
+  };
+  inp.click();
+});
+document.getElementById("resetAll").addEventListener("click", ()=>{
+  if(!confirm("Сбросить всё?")) return;
+  localStorage.removeItem(KEY);
+  renderCatOptions();
+  renderAll();
+});
+
+/* =========================
+   Render helpers
+========================= */
+function renderExcelInfo(){
+  const s = loadState();
+  document.getElementById("excelInfo").textContent = s.excelMeta
+    ? `Импортирован: ${s.excelMeta.name}. Листы: ${s.excelMeta.sheets.join(", ")}`
+    : "Excel ещё не импортирован.";
+}
+
+/* =========================
+   Render all
+========================= */
+function renderAll(){
+  renderCatOptions();
+  renderTxTable();
+  renderWeeksTable();
+  renderGoals();
+  renderGoalsMonthPlan();
+  renderKPI();
+  renderPlanTable();
+  renderIncomeCatsTable();
+  renderExcelInfo();
+  fillPeriods();
+}
+
+renderAll();
 </script>
 </body>
 </html>
