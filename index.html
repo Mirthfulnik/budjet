@@ -1220,4 +1220,830 @@ function drawBarChart(canvas, from, to, ops){
       it.setMonth(it.getMonth()+1);
     }
     for (const o of ops){
-      const
+      const d = new Date(o.date||o.createdAt);
+      const lab = d.toLocaleString("ru-RU", {month:"short"});
+      const b = map.get(lab);
+      if (!b) continue;
+      if (o.type==="income") b.income += Number(o.amount||0);
+      if (o.type==="expense") b.expense += Number(o.amount||0);
+    }
+  } else if (bucket==="dow"){
+    const labs = ["пн","вт","ср","чт","пт","сб","вс"];
+    labs.forEach(l=>{ map.set(l,{income:0, expense:0}); buckets.push({key:l}); });
+    for (const o of ops){
+      const d = new Date(o.date||o.createdAt);
+      const idx = (d.getDay()+6)%7;
+      const lab = labs[idx];
+      const b = map.get(lab);
+      if (o.type==="income") b.income += Number(o.amount||0);
+      if (o.type==="expense") b.expense += Number(o.amount||0);
+    }
+  } else {
+    // day labels from range, but cap max to 14 labels for readability
+    const maxLabels = 14;
+    if (days > maxLabels){
+      // step
+      const step = Math.ceil(days / maxLabels);
+      let it = new Date(from);
+      let i=0;
+      while (it<=to){
+        const lab = it.toLocaleDateString("ru-RU", {day:"2-digit", month:"short"});
+        map.set(lab,{income:0, expense:0});
+        buckets.push({key: lab, date: new Date(it)});
+        it.setDate(it.getDate()+step);
+        i++;
+        if (i>maxLabels+2) break;
+      }
+      // aggregate ops into nearest label by step bins
+      for (const o of ops){
+        const d = new Date(o.date||o.createdAt);
+        // find bin by step
+        const idx = Math.floor(daysBetween(from, d)/step);
+        const bKey = buckets[Math.min(idx, buckets.length-1)]?.key;
+        if (!bKey) continue;
+        const b = map.get(bKey);
+        if (o.type==="income") b.income += Number(o.amount||0);
+        if (o.type==="expense") b.expense += Number(o.amount||0);
+      }
+    } else {
+      let it = new Date(from);
+      while (it<=to){
+        const lab = it.toLocaleDateString("ru-RU", {day:"2-digit", month:"short"});
+        map.set(lab,{income:0, expense:0});
+        buckets.push({key: lab});
+        it.setDate(it.getDate()+1);
+      }
+      for (const o of ops){
+        const d = new Date(o.date||o.createdAt);
+        const lab = d.toLocaleDateString("ru-RU", {day:"2-digit", month:"short"});
+        const b = map.get(lab);
+        if (!b) continue;
+        if (o.type==="income") b.income += Number(o.amount||0);
+        if (o.type==="expense") b.expense += Number(o.amount||0);
+      }
+    }
+  }
+
+  const data = buckets.map(b=>({label:b.key, ...map.get(b.key)}));
+  const maxVal = Math.max(1, ...data.map(x=>Math.max(x.income, x.expense)));
+  const pad = 12;
+  const chartH = h - 40;
+  const chartW = w - pad*2;
+
+  // axis baseline
+  ctx.strokeStyle = "rgba(255,255,255,.10)";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad, pad+chartH);
+  ctx.lineTo(pad+chartW, pad+chartH);
+  ctx.stroke();
+
+  const n = data.length;
+  const groupW = chartW / Math.max(1, n);
+  const barW = Math.max(6, groupW * 0.28);
+  const gap = groupW * 0.12;
+
+  for (let i=0;i<n;i++){
+    const x0 = pad + i*groupW + groupW/2;
+    const incH = (data[i].income / maxVal) * (chartH-10);
+    const expH = (data[i].expense / maxVal) * (chartH-10);
+
+    // income bar
+    ctx.fillStyle = "rgba(65,211,141,.85)";
+    ctx.fillRect(x0 - barW - gap/2, pad+chartH - incH, barW, incH);
+
+    // expense bar
+    ctx.fillStyle = "rgba(255,91,110,.85)";
+    ctx.fillRect(x0 + gap/2, pad+chartH - expH, barW, expH);
+
+    // labels
+    ctx.fillStyle = "rgba(255,255,255,.70)";
+    ctx.font = "12px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(data[i].label, x0, pad+chartH + 18);
+  }
+
+  // legend
+  ctx.textAlign = "left";
+  ctx.font = "12px Inter, system-ui, sans-serif";
+  ctx.fillStyle = "rgba(65,211,141,.9)";
+  ctx.fillText("Доходы", pad, 16);
+  ctx.fillStyle = "rgba(255,91,110,.9)";
+  ctx.fillText("Расходы", pad+72, 16);
+}
+
+function drawPie(canvas, ops, kind){
+  const ctx = canvas.getContext("2d");
+  const DPR = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = Math.floor(w*DPR);
+  canvas.height = Math.floor(h*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  const byCat = {};
+  for (const o of ops){
+    const k = String(o.categoryId||"");
+    byCat[k] = (byCat[k]||0) + Number(o.amount||0);
+  }
+  const entries = Object.entries(byCat)
+    .map(([cid, val])=>({cid, val, name: (catById(cid)?.name || "Без категории")}))
+    .sort((a,b)=>b.val-a.val);
+
+  if (!entries.length){
+    ctx.fillStyle = "rgba(255,255,255,.60)";
+    ctx.font = "14px Inter, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Нет данных", w/2, h/2);
+    return;
+  }
+
+  const total = sum(entries.map(e=>e.val));
+  const cx = w*0.35, cy = h*0.52;
+  const r = Math.min(w,h)*0.32;
+
+  let ang = -Math.PI/2;
+  const palette = [
+    "rgba(87,166,255,.85)","rgba(65,211,141,.85)","rgba(255,204,102,.85)","rgba(255,91,110,.85)",
+    "rgba(173,140,255,.85)","rgba(255,145,92,.85)","rgba(120,220,255,.85)"
+  ];
+
+  for (let i=0;i<entries.length;i++){
+    const frac = entries[i].val/total;
+    const a2 = ang + frac*2*Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,ang,a2);
+    ctx.closePath();
+    ctx.fillStyle = palette[i % palette.length];
+    ctx.fill();
+    ang = a2;
+  }
+
+  // donut hole
+  ctx.beginPath();
+  ctx.arc(cx,cy,r*0.55,0,2*Math.PI);
+  ctx.fillStyle = "rgba(15,17,21,1)";
+  ctx.fill();
+
+  // legend (top 5)
+  ctx.textAlign = "left";
+  ctx.font = "12px Inter, system-ui, sans-serif";
+  const lx = w*0.62, ly = h*0.22;
+  const top = entries.slice(0,5);
+  for (let i=0;i<top.length;i++){
+    const pct = Math.round((top[i].val/total)*100);
+    ctx.fillStyle = palette[i % palette.length];
+    ctx.fillRect(lx, ly + i*18, 10, 10);
+    ctx.fillStyle = "rgba(255,255,255,.78)";
+    ctx.fillText(`${top[i].name} — ${pct}%`, lx+14, ly+9 + i*18);
+  }
+}
+
+function renderTopCategories(curOps){
+  const exp = curOps.filter(o=>o.type==="expense");
+  const inc = curOps.filter(o=>o.type==="income");
+  const top5 = (ops)=>{
+    const byCat = {};
+    for (const o of ops){
+      const k = String(o.categoryId||"");
+      byCat[k] = (byCat[k]||0) + Number(o.amount||0);
+    }
+    return Object.entries(byCat)
+      .map(([cid,val])=>({cid,val, name: (catById(cid)?.name || "Без категории")}))
+      .sort((a,b)=>b.val-a.val)
+      .slice(0,5);
+  };
+
+  const topE = top5(exp);
+  const topI = top5(inc);
+
+  $("#top-expense").innerHTML = topE.length ? topE.map((x,i)=>`
+    <div class="item">
+      <div class="left">
+        <div class="t">${i+1}. ${esc(x.name)}</div>
+        <div class="d">Сумма: ${ruMoney(x.val)}</div>
+      </div>
+      <div class="right"><span class="tag expense">расход</span></div>
+    </div>
+  `).join("") : `<div class="muted">Нет расходов в выбранном периоде.</div>`;
+
+  $("#top-income").innerHTML = topI.length ? topI.map((x,i)=>`
+    <div class="item">
+      <div class="left">
+        <div class="t">${i+1}. ${esc(x.name)}</div>
+        <div class="d">Сумма: ${ruMoney(x.val)}</div>
+      </div>
+      <div class="right"><span class="tag income">доход</span></div>
+    </div>
+  `).join("") : `<div class="muted">Нет доходов в выбранном периоде.</div>`;
+}
+
+/**
+ * ============================
+ *  GOALS + MOTIVATION
+ * ============================
+ */
+function renderGoals(){
+  // goals list
+  if (!state.goals.length){
+    $("#goals-list").innerHTML = `<div class="muted">Целей пока нет. Нажми «+ Цель».</div>`;
+  } else {
+    $("#goals-list").innerHTML = state.goals.map(g=>{
+      const target = Number(g.target||0);
+      const saved = Number(g.saved||0);
+      const pct = target>0 ? clamp((saved/target)*100, 0, 100) : 0;
+      const d = g.deadline ? new Date(g.deadline) : null;
+      const left = Math.max(0, target - saved);
+      return `
+        <div class="item">
+          <div class="left">
+            <div class="t">${esc(g.name||"Цель")}</div>
+            <div class="d">${ruMoney(saved)} / ${ruMoney(target)} · ${d ? ("до "+d.toLocaleDateString("ru-RU")) : "без дедлайна"}</div>
+            <div class="progress"><i style="width:${pct}%; background: rgba(87,166,255,.85)"></i></div>
+            <div class="d">Осталось: ${ruMoney(left)}</div>
+          </div>
+          <div class="right" style="flex-direction:column; align-items:flex-end">
+            <button class="btn inline small ghost" onclick="openGoalEdit('${esc(g.id)}')">Изм.</button>
+            <button class="btn inline small danger" onclick="deleteGoalConfirm('${esc(g.id)}')">✕</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+
+  // motivation: current avg monthly income from last 30 days incomes
+  const now = new Date();
+  const from = new Date(now); from.setDate(from.getDate()-29); from.setHours(0,0,0,0);
+  const to = new Date(now); to.setHours(23,59,59,999);
+  const ops = opsInRange(from,to).filter(o=>o.type==="income");
+  const totalIncome30 = sum(ops.map(o=>Number(o.amount||0)));
+  const curMonthly = Math.round(totalIncome30); // simple approx for MVP
+  $("#mot-cur").textContent = ruMoney(curMonthly);
+
+  // next stage
+  const stages = [...state.stages].sort((a,b)=>Number(a.amount)-Number(b.amount));
+  const next = stages.find(s=>Number(s.amount) > curMonthly) || stages[stages.length-1];
+  $("#mot-next").textContent = next ? `${next.name} · ${ruMoney(next.amount)}` : "—";
+  const gap = next ? Math.max(0, Number(next.amount)-curMonthly) : 0;
+  $("#mot-gap").textContent = ruMoney(gap);
+
+  drawMotivationBar($("#motivation-bar"), stages, curMonthly);
+}
+
+function drawMotivationBar(canvas, stages, current){
+  const ctx = canvas.getContext("2d");
+  const DPR = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = Math.floor(w*DPR);
+  canvas.height = Math.floor(h*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  if (!stages.length){
+    ctx.fillStyle="rgba(255,255,255,.65)";
+    ctx.font="14px Inter, system-ui, sans-serif";
+    ctx.textAlign="center";
+    ctx.fillText("Нет этапов шкалы", w/2, h/2);
+    return;
+  }
+
+  const min = Number(stages[0].amount);
+  const max = Number(stages[stages.length-1].amount);
+  const padX = 22, padY = 16;
+
+  // vertical bar (single)
+  const barW = Math.min(90, w*0.22);
+  const barX = padX + barW/2;
+  const barTop = padY + 10;
+  const barBottom = h - padY - 10;
+  const barH = barBottom - barTop;
+
+  // background
+  ctx.strokeStyle = "rgba(255,255,255,.12)";
+  ctx.lineWidth = 10;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(barX, barBottom);
+  ctx.lineTo(barX, barTop);
+  ctx.stroke();
+
+  // fill to current
+  const curClamped = clamp(current, min, max);
+  const frac = (curClamped - min) / Math.max(1,(max-min));
+  const yCur = barBottom - frac * barH;
+
+  ctx.strokeStyle = "rgba(87,166,255,.90)";
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.moveTo(barX, barBottom);
+  ctx.lineTo(barX, yCur);
+  ctx.stroke();
+
+  // markers for stages + labels on right
+  ctx.font = "12px Inter, system-ui, sans-serif";
+  ctx.textAlign = "left";
+
+  for (let i=0;i<stages.length;i++){
+    const amt = Number(stages[i].amount);
+    const f = (amt - min)/Math.max(1,(max-min));
+    const y = barBottom - f*barH;
+
+    // marker
+    ctx.fillStyle = "rgba(255,255,255,.85)";
+    ctx.beginPath();
+    ctx.arc(barX, y, 4, 0, 2*Math.PI);
+    ctx.fill();
+
+    // label
+    const lblX = barX + 18;
+    ctx.fillStyle = "rgba(255,255,255,.78)";
+    const name = stages[i].name || "Этап";
+    ctx.fillText(`${name} — ${ruMoney(amt)}`, lblX, y+4);
+  }
+
+  // current marker
+  ctx.fillStyle = "rgba(65,211,141,.95)";
+  ctx.beginPath();
+  ctx.arc(barX, yCur, 6, 0, 2*Math.PI);
+  ctx.fill();
+  ctx.fillStyle = "rgba(65,211,141,.95)";
+  ctx.fillText(`Сейчас — ${ruMoney(current)}`, barX + 18, yCur - 10);
+
+  // baseline label (stability requirement)
+  // user asked bottom: "Стабильность — 150 000 руб." as default anchor.
+  // If stage exists at 150k, it will already show; if not, add a hint text at bottom.
+  const has150 = stages.some(s=>Number(s.amount)===150000);
+  if (!has150){
+    ctx.fillStyle="rgba(255,255,255,.55)";
+    ctx.fillText(`Стабильность — ${ruMoney(150000)}`, barX + 18, barBottom + 2);
+  }
+}
+
+$("#btn-new-goal").addEventListener("click", ()=>openGoalEdit(null));
+
+function openGoalEdit(id){
+  const g = id ? state.goals.find(x=>String(x.id)===String(id)) : null;
+  const html = `
+    <div class="field">
+      <label>Название</label>
+      <input id="g-name" value="${escAttr(g?.name||"")}" placeholder="Например: отпуск, подушка, техника" />
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Цель (сумма)</label>
+        <input id="g-target" type="number" value="${escAttr(g?.target||"")}" placeholder="0" />
+      </div>
+      <div class="field">
+        <label>Накоплено</label>
+        <input id="g-saved" type="number" value="${escAttr(g?.saved||"")}" placeholder="0" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Дедлайн</label>
+        <input id="g-deadline" type="date" value="${escAttr(g?.deadline ? isoDate(g.deadline) : "")}" />
+      </div>
+      <div class="field">
+        <label>Счёт (необязательно)</label>
+        <select id="g-acc">
+          <option value="">—</option>
+          ${state.accounts.map(a=>`<option value="${esc(a.id)}" ${String(a.id)===String(g?.accountId||"")?"selected":""}>${esc(a.name)}</option>`).join("")}
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn" id="g-save">Сохранить</button>
+      <button class="btn secondary" id="g-cancel">Отмена</button>
+    </div>
+    <div class="hint" style="margin-top:10px">
+      Рекомендации по накоплению считаются в «Пульт → План накоплений».
+    </div>
+  `;
+  openModal(g ? "Редактировать цель" : "Новая цель", html);
+  $("#g-cancel").addEventListener("click", closeModal, {once:true});
+  $("#g-save").addEventListener("click", async ()=>{
+    const data = {
+      id: g?.id || null,
+      name: $("#g-name").value.trim(),
+      target: Number($("#g-target").value||0),
+      saved: Number($("#g-saved").value||0),
+      deadline: $("#g-deadline").value || "",
+      accountId: $("#g-acc").value || ""
+    };
+    if (!data.name){ toast("Цель", "Укажи название", "warn", 2000); return; }
+    if (!data.target || data.target<=0){ toast("Цель", "Цель (сумма) должна быть > 0", "warn", 2200); return; }
+
+    try{
+      toast("Цели", "Сохраняю…", "info", 0);
+      await apiPost("upsertGoal", data);
+      closeModal();
+      await syncAll("goalSave");
+    }catch(err){
+      toast("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+
+function deleteGoalConfirm(id){
+  const g = state.goals.find(x=>String(x.id)===String(id));
+  if (!g) return;
+  const html = `
+    <div class="muted" style="margin-bottom:12px">
+      Удалить цель «${esc(g.name||"") }»?
+    </div>
+    <div class="row">
+      <button class="btn danger" id="yes">Удалить</button>
+      <button class="btn secondary" id="no">Отмена</button>
+    </div>
+  `;
+  openModal("Подтверждение", html);
+  $("#no").addEventListener("click", closeModal, {once:true});
+  $("#yes").addEventListener("click", async ()=>{
+    try{
+      toast("Цели", "Удаляю…", "info", 0);
+      await apiPost("deleteGoal", { id });
+      closeModal();
+      await syncAll("goalDelete");
+    }catch(err){
+      toast("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+
+/**
+ * ============================
+ *  SETTINGS
+ * ============================
+ */
+function renderSettings(){
+  // categories list
+  const cats = [...state.categories].sort((a,b)=>(a.type||"").localeCompare(b.type||"") || (a.name||"").localeCompare(b.name||""));
+  $("#cats-list").innerHTML = cats.length ? cats.map(c=>`
+    <div class="item">
+      <div class="left">
+        <div class="t">${esc(c.name)} <span class="tag ${esc(c.type)}" style="margin-left:8px">${c.type==="expense"?"расход":c.type==="income"?"доход":"перевод"}</span></div>
+        <div class="d">ID: ${esc(String(c.id))}</div>
+      </div>
+      <div class="right">
+        <button class="btn inline small ghost" onclick="openCategoryEditor('${esc(c.id)}')">Изм.</button>
+        <button class="btn inline small danger" onclick="deleteCategoryConfirm('${esc(c.id)}')">✕</button>
+      </div>
+    </div>
+  `).join("") : `<div class="muted">Категорий пока нет. Добавь первую.</div>`;
+
+  // limits settings list for current month
+  const month = yyyymm(new Date());
+  const lms = state.limits.filter(l=>String(l.month)===String(month));
+  const byCat = {};
+  lms.forEach(l=>byCat[String(l.categoryId)] = l);
+
+  const expCats = state.categories.filter(c=>c.type==="expense");
+  $("#limits-settings").innerHTML = expCats.length ? expCats.map(c=>{
+    const lim = byCat[String(c.id)];
+    return `
+      <div class="item">
+        <div class="left">
+          <div class="t">${esc(c.name)}</div>
+          <div class="d">Месяц: ${month} · Лимит: ${lim ? ruMoney(lim.amount) : "не задан"}</div>
+        </div>
+        <div class="right">
+          <button class="btn inline small" onclick="openLimitEditor({id:'${esc(lim?.id||"")}', categoryId:'${esc(c.id)}', month:'${month}', amount:'${esc(lim?.amount||"")}'}, 'Лимит: ${esc(c.name)}')">Настроить</button>
+        </div>
+      </div>
+    `;
+  }).join("") : `<div class="muted">Сначала добавь категории расходов.</div>`;
+
+  // stages list
+  $("#stages-list").innerHTML = state.stages.length ? state.stages.map(s=>`
+    <div class="item">
+      <div class="left">
+        <div class="t">${esc(s.name)} — ${ruMoney(s.amount)}</div>
+        <div class="d">ID: ${esc(String(s.id))}</div>
+      </div>
+      <div class="right">
+        <button class="btn inline small ghost" onclick="openStageEditor('${esc(s.id)}')">Изм.</button>
+        <button class="btn inline small danger" onclick="deleteStageConfirm('${esc(s.id)}')">✕</button>
+      </div>
+    </div>
+  `).join("") : `<div class="muted">Этапов нет. Добавь минимум «Стабильность» и «Цель 2026».</div>`;
+
+  // quotes list
+  $("#quotes-list").innerHTML = state.quotes.length ? state.quotes.map(q=>`
+    <div class="item">
+      <div class="left">
+        <div class="t">“${esc(q.text)}”</div>
+        <div class="d">${esc(q.author||"")}</div>
+      </div>
+      <div class="right">
+        <button class="btn inline small ghost" onclick="openQuoteEditor('${esc(q.id)}')">Изм.</button>
+        <button class="btn inline small danger" onclick="deleteQuoteConfirm('${esc(q.id)}')">✕</button>
+      </div>
+    </div>
+  `).join("") : `<div class="muted">Цитат нет. Добавь несколько.</div>`;
+
+  // update selects for Pult
+  renderSelects();
+}
+
+$("#btn-new-cat").addEventListener("click", ()=>openCategoryEditor(null));
+$("#btn-new-limit").addEventListener("click", ()=>openLimitEditor({id:null, categoryId:"", month: yyyymm(new Date()), amount:""}, "Новый лимит"));
+$("#btn-new-stage").addEventListener("click", ()=>openStageEditor(null));
+$("#btn-new-quote").addEventListener("click", ()=>openQuoteEditor(null));
+
+function openCategoryEditor(id){
+  const c = id ? state.categories.find(x=>String(x.id)===String(id)) : null;
+  const html = `
+    <div class="field">
+      <label>Название</label>
+      <input id="c-name" value="${escAttr(c?.name||"")}" placeholder="Например: Еда, Транспорт" />
+    </div>
+    <div class="field">
+      <label>Тип</label>
+      <select id="c-type">
+        <option value="expense" ${c?.type==="expense"?"selected":""}>Расход</option>
+        <option value="income" ${c?.type==="income"?"selected":""}>Доход</option>
+        <option value="transfer" ${c?.type==="transfer"?"selected":""}>Перевод</option>
+      </select>
+    </div>
+    <div class="row">
+      <button class="btn" id="c-save">Сохранить</button>
+      <button class="btn secondary" id="c-cancel">Отмена</button>
+    </div>
+    <div class="hint" style="margin-top:10px">
+      Категории хранятся в Google Таблице. После сохранения они появятся в «Пульте».
+    </div>
+  `;
+  openModal(c ? "Редактировать категорию" : "Новая категория", html);
+  $("#c-cancel").addEventListener("click", closeModal, {once:true});
+  $("#c-save").addEventListener("click", async ()=>{
+    const name = $("#c-name").value.trim();
+    const type = $("#c-type").value;
+    if (!name){ toast("Категории", "Укажи название", "warn", 2000); return; }
+    try{
+      toast("Категории", "Сохраняю…", "info", 0);
+      await apiPost("upsertCategory", { id: c?.id || null, name, type });
+      closeModal();
+      await syncAll("catSave");
+    }catch(err){
+      toast("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+function deleteCategoryConfirm(id){
+  const c = state.categories.find(x=>String(x.id)===String(id));
+  if (!c) return;
+  const html = `
+    <div class="muted" style="margin-bottom:12px">
+      Удалить категорию «${esc(c.name)}»?
+      <div style="margin-top:8px" class="hint">Если в операциях есть эта категория, операциям может быть назначено «Без категории» (в зависимости от логики GAS).</div>
+    </div>
+    <div class="row">
+      <button class="btn danger" id="yes">Удалить</button>
+      <button class="btn secondary" id="no">Отмена</button>
+    </div>
+  `;
+  openModal("Подтверждение", html);
+  $("#no").addEventListener("click", closeModal, {once:true});
+  $("#yes").addEventListener("click", async ()=>{
+    try{
+      toast("Категории", "Удаляю…", "info", 0);
+      await apiPost("deleteCategory", { id });
+      closeModal();
+      await syncAll("catDelete");
+    }catch(err){
+      toast("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+
+function openLimitEditor(lim, title="Лимит"){
+  const month = lim.month || yyyymm(new Date());
+  const expCats = state.categories.filter(c=>c.type==="expense");
+  const html = `
+    <div class="field">
+      <label>Категория (расход)</label>
+      <select id="l-cat">
+        ${expCats.map(c=>`<option value="${esc(c.id)}" ${String(c.id)===String(lim.categoryId)?"selected":""}>${esc(c.name)}</option>`).join("")}
+      </select>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Месяц</label>
+        <input id="l-month" value="${escAttr(month)}" placeholder="YYYY-MM" />
+      </div>
+      <div class="field">
+        <label>Лимит (₽)</label>
+        <input id="l-amount" type="number" value="${escAttr(lim.amount||"")}" placeholder="0" />
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn" id="l-save">Сохранить</button>
+      <button class="btn secondary" id="l-cancel">Отмена</button>
+    </div>
+    <div class="hint" style="margin-top:10px">Чтобы отключить лимит — поставь 0.</div>
+  `;
+  openModal(title, html);
+  $("#l-cancel").addEventListener("click", closeModal, {once:true});
+  $("#l-save").addEventListener("click", async ()=>{
+    const categoryId = $("#l-cat").value;
+    const month = $("#l-month").value.trim();
+    const amount = Number($("#l-amount").value||0);
+    if (!categoryId){ toast("Лимиты", "Выбери категорию", "warn", 2000); return; }
+    if (!/^\d{4}-\d{2}$/.test(month)){ toast("Лимиты", "Месяц в формате YYYY-MM", "warn", 2200); return; }
+    try{
+      toast("Лимиты", "Сохраняю…", "info", 0);
+      await apiPost("upsertLimit", { id: lim.id || null, categoryId, month, amount });
+      closeModal();
+      await syncAll("limitSave");
+    }catch(err){
+      toast("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+
+function openStageEditor(id){
+  const s = id ? state.stages.find(x=>String(x.id)===String(id)) : null;
+  const html = `
+    <div class="field">
+      <label>Название этапа</label>
+      <input id="s-name" value="${escAttr(s?.name||"")}" placeholder="Например: Стабильность" />
+    </div>
+    <div class="field">
+      <label>Сумма (среднемесячный доход, ₽)</label>
+      <input id="s-amount" type="number" value="${escAttr(s?.amount||"")}" placeholder="150000" />
+    </div>
+    <div class="row">
+      <button class="btn" id="s-save">Сохранить</button>
+      <button class="btn secondary" id="s-cancel">Отмена</button>
+    </div>
+  `;
+  openModal(s ? "Редактировать этап" : "Новый этап", html);
+  $("#s-cancel").addEventListener("click", closeModal, {once:true});
+  $("#s-save").addEventListener("click", async ()=>{
+    const name = $("#s-name").value.trim();
+    const amount = Number($("#s-amount").value||0);
+    if (!name){ toast("Этапы", "Укажи название", "warn", 2000); return; }
+    if (!amount || amount<=0){ toast("Этапы", "Сумма должна быть > 0", "warn", 2200); return; }
+    try{
+      toast("Этапы", "Сохраняю…", "info", 0);
+      await apiPost("upsertStage", { id: s?.id || null, name, amount });
+      closeModal();
+      await syncAll("stageSave");
+    }catch(err){
+      toast("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+function deleteStageConfirm(id){
+  const s = state.stages.find(x=>String(x.id)===String(id));
+  if (!s) return;
+  const html = `
+    <div class="muted" style="margin-bottom:12px">
+      Удалить этап «${esc(s.name)}»?
+    </div>
+    <div class="row">
+      <button class="btn danger" id="yes">Удалить</button>
+      <button class="btn secondary" id="no">Отмена</button>
+    </div>
+  `;
+  openModal("Подтверждение", html);
+  $("#no").addEventListener("click", closeModal, {once:true});
+  $("#yes").addEventListener("click", async ()=>{
+    try{
+      toast("Этапы", "Удаляю…", "info", 0);
+      await apiPost("deleteStage", { id });
+      closeModal();
+      await syncAll("stageDelete");
+    }catch(err){
+      toast("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+
+function openQuoteEditor(id){
+  const q = id ? state.quotes.find(x=>String(x.id)===String(id)) : null;
+  const html = `
+    <div class="field">
+      <label>Цитата</label>
+      <textarea id="q-text" placeholder="Текст цитаты">${esc(q?.text||"")}</textarea>
+    </div>
+    <div class="field">
+      <label>Автор (необязательно)</label>
+      <input id="q-author" value="${escAttr(q?.author||"")}" placeholder="Имя автора" />
+    </div>
+    <div class="row">
+      <button class="btn" id="q-save">Сохранить</button>
+      <button class="btn secondary" id="q-cancel">Отмена</button>
+    </div>
+  `;
+  openModal(q ? "Редактировать цитату" : "Новая цитата", html);
+  $("#q-cancel").addEventListener("click", closeModal, {once:true});
+  $("#q-save").addEventListener("click", async ()=>{
+    const text = $("#q-text").value.trim();
+    const author = $("#q-author").value.trim();
+    if (!text){ toast("Цитаты", "Текст цитаты обязателен", "warn", 2200); return; }
+    try{
+      toast("Цитаты", "Сохраняю…", "info", 0);
+      await apiPost("upsertQuote", { id: q?.id || null, text, author });
+      closeModal();
+      await syncAll("quoteSave");
+    }catch(err){
+      toast("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+function deleteQuoteConfirm(id){
+  const q = state.quotes.find(x=>String(x.id)===String(id));
+  if (!q) return;
+  const html = `
+    <div class="muted" style="margin-bottom:12px">
+      Удалить цитату?
+      <div style="margin-top:8px; color:var(--text); font-weight:900">“${esc(q.text)}”</div>
+    </div>
+    <div class="row">
+      <button class="btn danger" id="yes">Удалить</button>
+      <button class="btn secondary" id="no">Отмена</button>
+    </div>
+  `;
+  openModal("Подтверждение", html);
+  $("#no").addEventListener("click", closeModal, {once:true});
+  $("#yes").addEventListener("click", async ()=>{
+    try{
+      toast("Цитаты", "Удаляю…", "info", 0);
+      await apiPost("deleteQuote", { id });
+      closeModal();
+      await syncAll("quoteDelete");
+    }catch(err){
+      toast("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+
+/**
+ * ============================
+ *  QUOTE OF THE DAY (используй где захочешь)
+ * ============================
+ * Сейчас мы её не выводим отдельным блоком, но логика готова.
+ * Если захочешь — добавим блок на Дашборд рядом со шкалой/целями.
+ */
+function quoteOfTheDay(){
+  const q = state.quotes;
+  if (!q.length) return null;
+  // daily rotation: index by days since epoch
+  const dayIndex = Math.floor(Date.now() / (24*3600*1000));
+  return q[dayIndex % q.length];
+}
+
+/**
+ * ============================
+ *  SECURITY / ESCAPING
+ * ============================
+ */
+function esc(s){
+  return String(s??"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function escAttr(s){ return esc(s).replaceAll("\n"," "); }
+
+/**
+ * ============================
+ *  INIT
+ * ============================
+ */
+(function init(){
+  // set default pills
+  $("#pill-month").textContent = new Date().toLocaleString("ru-RU", {month:"long", year:"numeric"});
+
+  // initial period
+  setPeriod("week");
+
+  // resize redraw charts
+  let resizeT = null;
+  window.addEventListener("resize", ()=>{
+    clearTimeout(resizeT);
+    resizeT = setTimeout(()=>{
+      if ($("#page-dashboard").classList.contains("active")) renderDashboard();
+      if ($("#page-goals").classList.contains("active")) renderGoals();
+    }, 120);
+  });
+
+  // if API_URL not set, show guidance
+  if (!API_URL || API_URL.includes("PASTE_YOUR_GAS_WEBAPP_URL_HERE")){
+    toast(
+      "Настрой API_URL",
+      "Вставь ссылку Web App Google Apps Script в константу API_URL (внизу файла). После этого нажми «Синхр.»",
+      "warn",
+      0
+    );
+  } else {
+    syncAll("init");
+  }
+})();
+</script>
+</body>
+</html>
