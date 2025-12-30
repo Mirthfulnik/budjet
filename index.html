@@ -871,26 +871,174 @@
     /***********************
      * RENDER: GOALS + MOTIVATION
      ***********************/
-    function renderGoals(){
-      const root = $("goalsList");
-      root.innerHTML = "";
+function renderGoals(){
+  const root = $("goalsList");
+  root.innerHTML = "";
 
-      if (!GOALS.length){
-        root.innerHTML = `<div style="color:var(--muted); font-size:12px;">Целей пока нет. Нажми “Добавить цель”.</div>`;
-      } else {
-        for (const g of GOALS.slice().sort((a,b)=>(a.priority||"").localeCompare(b.priority||""))){
-          const el = document.createElement("div");
-          el.className = "miniItem";
-          el.innerHTML = `
+  if (!GOALS.length){
+    root.innerHTML = `<div style="color:var(--muted); font-size:12px;">Целей пока нет. Нажми “Добавить цель”.</div>`;
+  } else {
+    const sorted = GOALS.slice().sort((a,b)=>String(a.priority||"").localeCompare(String(b.priority||"")));
+    for (const g of sorted){
+      const el = document.createElement("div");
+      el.className = "miniItem";
+      el.innerHTML = `
+        <div style="flex:1;">
+          <div class="row cols3">
             <div>
-              <div class="name">${escapeHtml(g.name)}</div>
-              <div class="sub">${g.due ? `Срок: ${g.due}` : ""}</div>
+              <label>Название (уникальное)</label>
+              <input data-goal="${escapeAttr(g.name)}" data-field="name" value="${escapeAttr(g.name)}" />
             </div>
-            <div class="val">${fmtMoney(g.saved)} / ${fmtMoney(g.amount)}</div>
-          `;
-          root.appendChild(el);
-        }
+            <div>
+              <label>Сумма, ₽</label>
+              <input type="number" data-goal="${escapeAttr(g.name)}" data-field="amount" value="${escapeAttr(g.amount||0)}" />
+            </div>
+            <div>
+              <label>Накоплено, ₽</label>
+              <input type="number" data-goal="${escapeAttr(g.name)}" data-field="saved" value="${escapeAttr(g.saved||0)}" />
+            </div>
+          </div>
+
+          <div style="height:8px"></div>
+
+          <div class="row cols3">
+            <div>
+              <label>Срок (YYYY-MM-DD)</label>
+              <input type="date" data-goal="${escapeAttr(g.name)}" data-field="due" value="${escapeAttr(g.due||"")}" />
+            </div>
+            <div>
+              <label>Старт (опц.)</label>
+              <input type="date" data-goal="${escapeAttr(g.name)}" data-field="start" value="${escapeAttr(g.start||"")}" />
+            </div>
+            <div>
+              <label>Приоритет</label>
+              <input data-goal="${escapeAttr(g.name)}" data-field="priority" value="${escapeAttr(g.priority||"")}" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+          <button class="btn small primary" data-goal-save="${escapeAttr(g.name)}">Сохранить</button>
+          <button class="xbtn" title="Удалить" data-goal-del="${escapeAttr(g.name)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      `;
+      root.appendChild(el);
+    }
+
+    // Save handlers
+    document.querySelectorAll("[data-goal-save]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        const originalName = btn.dataset.goalSave;
+        const patch = collectGoalPatch(originalName);
+        await updateGoal(originalName, patch);
+      };
+    });
+
+    // Delete handlers
+    document.querySelectorAll("[data-goal-del]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        const name = btn.dataset.goalDel;
+        const ok = confirm(`Удалить цель?\n\n${name}`);
+        if (!ok) return;
+        await deleteGoal(name);
+      };
+    });
+  }
+
+  renderMotivation(); // отдельно, чтобы было чисто
+}
+
+  function collectGoalPatch(originalName){
+  const patch = {};
+  const inputs = document.querySelectorAll(`[data-goal="${CSS.escape(originalName)}"]`);
+  inputs.forEach(inp=>{
+    const field = inp.dataset.field;
+    if (!field) return;
+    if (field === "amount" || field === "saved") patch[field] = Number(inp.value || 0);
+    else patch[field] = inp.value || "";
+  });
+  return patch;
+}
+
+async function updateGoal(originalName, patch){
+  toastShow("warn","Цели","Сохраняю изменения…");
+  try{
+    await apiPost("updateGoal", { originalName, patch });
+    await syncGoalsOnly();
+    toastShow("ok","Сохранено","Цель обновлена.");
+    setTimeout(toastHide, 1200);
+  }catch(err){
+    toastShow("bad","Ошибка", String(err.message || err));
+  }
+}
+
+async function deleteGoal(name){
+  toastShow("warn","Цели","Удаляю цель…");
+  try{
+    await apiPost("deleteGoal", { name });
+    await syncGoalsOnly();
+    toastShow("ok","Удалено","Цель удалена.");
+    setTimeout(toastHide, 1200);
+  }catch(err){
+    toastShow("bad","Ошибка", String(err.message || err));
+  }
+}
+
+async function addGoalPrompt(){
+  const name = prompt("Название цели (уникальное):", "Новая цель");
+  if (!name) return;
+
+  const amount = Number(prompt("Сумма цели (₽):", "100000") || 0);
+  if (!amount) return;
+
+  const due = prompt("Срок (YYYY-MM-DD, можно пусто):", "") || "";
+  const start = prompt("Старт (YYYY-MM-DD, можно пусто):", "") || "";
+  const saved = Number(prompt("Уже накоплено (₽):", "0") || 0);
+  const priority = prompt("Приоритет (например A/B/C):", "B") || "";
+
+  toastShow("warn","Цели","Добавляю цель…");
+  try{
+    await apiPost("addGoal", { name, amount, due, start, saved, priority });
+    await syncGoalsOnly();
+    toastShow("ok","Добавлено","Цель создана.");
+    setTimeout(toastHide, 1200);
+  }catch(err){
+    toastShow("bad","Ошибка", String(err.message || err));
+  }
+}
+
+function renderMotivation(){
+  const from = $("fromDate").value || SETTINGS.defaultFrom || monthStartISO();
+  const to = $("toDate").value || SETTINGS.defaultTo || todayISO();
+  const f = parseDateISO(from);
+  const t = parseDateISO(to);
+
+  const tx = ALL_TX.map(x=>({ ...x, _d: parseDateISO(x.date) })).filter(x=>x._d>=f && x._d<=t);
+  const sumIncome = tx.filter(x=>x.type==="income").reduce((a,x)=>a+Number(x.amount||0),0);
+  const sumExpense = tx.filter(x=>x.type==="expense").reduce((a,x)=>a+Number(x.amount||0),0);
+  const balance = sumIncome - sumExpense;
+
+  const min = Number(SETTINGS.motivationMin || 150000);
+  const max = Number(SETTINGS.motivationMax || 0);
+
+  $("motMinLabel").textContent = `Стабильность · ${fmtMoney(min)}`;
+  $("motMaxLabel").textContent = `Цель 2026 · ${fmtMoney(max)}`;
+
+  let pct = 0;
+  if (max > min) pct = clamp01((balance - min) / (max - min));
+  else if (min > 0) pct = clamp01(balance / min);
+
+  $("motFill").style.width = (pct * 100).toFixed(1) + "%";
+}
+
       }
+
+    
 
       // Motivation chart
       const from = $("fromDate").value || SETTINGS.defaultFrom || monthStartISO();
@@ -1045,6 +1193,13 @@
         const from = $("fromDate").value || SETTINGS.defaultFrom || "2025-01-01";
         const to = $("toDate").value || SETTINGS.defaultTo || "2026-12-31";
 
+    async function syncGoalsOnly(){
+      const goalsResp = await apiGet("getGoals");
+      GOALS = (goalsResp.items || goalsResp.data?.items || []);
+      saveLocal();
+      renderGoals();
+    }
+
         const txResp = await apiGet("listTransactions", { from, to });
         ALL_TX = (txResp.items || txResp.data?.items || []);
 
@@ -1173,7 +1328,7 @@
 
       $("toastClose").onclick = toastHide;
 
-      $("btnGoalAdd").onclick = ()=>{
+    $("btnGoalAdd").onclick = addGoalPrompt;
         const name = prompt("Название цели:", "Новая цель");
         if (!name) return;
         const amount = Number(prompt("Сумма цели (₽):", "100000") || 0);
