@@ -1,1610 +1,1212 @@
-
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Finance OS — Пульт и Дашборд</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Finance OS</title>
   <style>
     :root{
-      --bg:#0b0f17;
-      --card:#111827;
-      --card2:#0f172a;
-      --text:#e5e7eb;
-      --muted:#9ca3af;
-      --line:#243041;
-      --good:#22c55e;
-      --warn:#f59e0b;
-      --bad:#ef4444;
-      --accent:#60a5fa;
-      --accent2:#a78bfa;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --bg:#070a12;
+      --panel:#0d1424;
+      --panel2:#0b1220;
+      --stroke:rgba(255,255,255,.08);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.62);
+      --muted2:rgba(255,255,255,.48);
+      --accent:#6aa3ff;
+      --good:#35d07f;
+      --bad:#ff5a7a;
+      --warn:#ffcc66;
+      --shadow: 0 10px 40px rgba(0,0,0,.45);
       --radius: 16px;
+      --radius2: 22px;
     }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
-      background: radial-gradient(1200px 800px at 20% 0%, rgba(96,165,250,.16), transparent 55%),
-                  radial-gradient(1200px 800px at 80% 10%, rgba(167,139,250,.14), transparent 55%),
-                  var(--bg);
+      font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(1000px 600px at 20% -10%, rgba(106,163,255,.18), transparent 60%),
+                  radial-gradient(800px 500px at 90% 0%, rgba(53,208,127,.12), transparent 55%),
+                  linear-gradient(180deg, #050811 0%, #070a12 100%);
       color:var(--text);
     }
-    a{color:var(--accent); text-decoration:none}
-    .wrap{max-width:1200px; margin:0 auto; padding:20px}
-    header{
-      display:flex; gap:12px; align-items:center; justify-content:space-between;
-      padding:14px 16px; border:1px solid var(--line); border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(17,24,39,.92), rgba(17,24,39,.72));
-      box-shadow: var(--shadow);
-      position:sticky; top:12px; z-index:10;
-      backdrop-filter: blur(10px);
+
+    /* Layout */
+    .app{
+      min-height:100%;
+      padding-bottom: 92px; /* space for bottom bar */
     }
-    .brand{display:flex; gap:12px; align-items:center}
+    .container{
+      width:min(1100px, 92vw);
+      margin: 22px auto 0;
+    }
+
+    /* Top title */
+    .top{
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap:16px; margin-bottom: 14px;
+    }
+    .brand{
+      display:flex; gap:12px; align-items:center;
+    }
     .logo{
-      width:38px;height:38px;border-radius:12px;
-      background: conic-gradient(from 160deg, var(--accent), var(--accent2), var(--accent));
-      box-shadow: 0 10px 30px rgba(96,165,250,.25);
+      width:36px; height:36px; border-radius: 10px;
+      background: linear-gradient(135deg, rgba(106,163,255,.95), rgba(122,70,255,.75));
+      box-shadow: 0 12px 30px rgba(106,163,255,.22);
     }
-    .title{display:flex; flex-direction:column; gap:2px}
-    .title b{font-size:15px}
-    .title span{font-size:12px;color:var(--muted)}
-    .tabs{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .tab{
-      padding:10px 12px; border:1px solid var(--line); border-radius: 12px;
-      background: rgba(15,23,42,.65); color:var(--text);
-      cursor:pointer; user-select:none;
+    .brand h1{
+      margin:0; font-size:16px; letter-spacing:.2px;
     }
-    .tab.active{border-color: rgba(96,165,250,.7); box-shadow: 0 0 0 3px rgba(96,165,250,.15)}
-    .rightbar{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .pill{
-      font-size:12px; color:var(--muted);
-      border:1px solid var(--line); border-radius: 999px; padding:8px 10px;
-      background: rgba(15,23,42,.55);
+    .brand .sub{
+      margin-top:2px; color:var(--muted); font-size:12px;
     }
-    .btn{
-      padding:10px 12px; border:1px solid rgba(96,165,250,.45); border-radius: 12px;
-      background: rgba(96,165,250,.12); color:var(--text);
-      cursor:pointer;
-    }
-    .btn:hover{background: rgba(96,165,250,.18)}
-    .btn:disabled{opacity:.55; cursor:not-allowed}
-    .grid{
-      display:grid; gap:14px; margin-top:14px;
-    }
-    .grid.cols-2{grid-template-columns: 1.1fr .9fr}
-    .grid.cols-3{grid-template-columns: 1fr 1fr 1fr}
-    @media (max-width: 980px){
-      .grid.cols-2,.grid.cols-3{grid-template-columns:1fr}
-      header{position:static}
-    }
+
+    /* Cards */
     .card{
-      border:1px solid var(--line);
-      border-radius: var(--radius);
-      background: linear-gradient(180deg, rgba(17,24,39,.92), rgba(17,24,39,.72));
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
       box-shadow: var(--shadow);
-      padding:14px;
       overflow:hidden;
     }
-    .card h3{
-      margin:0 0 10px; font-size:14px; color: #f3f4f6; letter-spacing:.2px
+    .card .hd{
+      padding: 14px 16px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background: linear-gradient(180deg, rgba(255,255,255,.05), transparent);
+      border-bottom: 1px solid var(--stroke);
     }
-    .muted{color:var(--muted)}
-    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-    .field{display:flex; flex-direction:column; gap:6px; min-width: 160px; flex: 1}
-    label{font-size:12px; color:var(--muted)}
+    .card .hd h2{margin:0; font-size:14px}
+    .card .bd{ padding: 14px 16px; }
+
+    /* Buttons */
+    .btn{
+      appearance:none; border:none;
+      padding:10px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.07);
+      color:var(--text);
+      border: 1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      transition: transform .06s ease, background .12s ease;
+      user-select:none;
+    }
+    .btn:hover{ background: rgba(255,255,255,.10); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{
+      background: rgba(106,163,255,.20);
+      border-color: rgba(106,163,255,.35);
+    }
+    .btn.danger{
+      background: rgba(255,90,122,.16);
+      border-color: rgba(255,90,122,.30);
+    }
+    .btn.ghost{
+      background: transparent;
+      border-color: rgba(255,255,255,.14);
+    }
+    .btn.small{ padding:7px 10px; border-radius: 12px; font-size:12px; }
+
+    /* Inputs */
     input, select, textarea{
       width:100%;
-      padding:10px 10px;
-      border:1px solid var(--line);
-      border-radius: 12px;
-      background: rgba(15,23,42,.55);
-      color:var(--text);
+      padding:10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
       outline:none;
     }
-    textarea{min-height:42px; resize:vertical}
-    input:focus,select:focus,textarea:focus{border-color: rgba(96,165,250,.6); box-shadow: 0 0 0 3px rgba(96,165,250,.12)}
-    .kpis{display:grid; grid-template-columns: repeat(4,1fr); gap:10px}
-    @media (max-width: 980px){.kpis{grid-template-columns: repeat(2,1fr)}}
-    .kpi{
-      border:1px solid var(--line);
-      border-radius: 14px;
-      background: rgba(15,23,42,.55);
-      padding:12px;
+    textarea{ min-height: 90px; resize: vertical; }
+    label{ display:block; font-size:12px; color:var(--muted); margin: 0 0 6px; }
+    .row{ display:grid; gap:12px; }
+    .row.cols2{ grid-template-columns: 1fr 1fr; }
+    .row.cols3{ grid-template-columns: 1fr 1fr 1fr; }
+    @media (max-width: 820px){
+      .row.cols2, .row.cols3{ grid-template-columns: 1fr; }
+      .container{ width:min(980px, 94vw); }
     }
-    .kpi .label{font-size:12px;color:var(--muted)}
-    .kpi .value{font-size:18px;margin-top:4px}
-    .kpi .delta{font-size:12px;margin-top:6px}
-    .delta.good{color:var(--good)}
-    .delta.bad{color:var(--bad)}
-    .delta.neu{color:var(--muted)}
-    .table{
-      width:100%; border-collapse: collapse; overflow:auto;
-      border:1px solid var(--line); border-radius: 14px;
-      background: rgba(15,23,42,.35);
+
+    /* Table */
+    .tableWrap{ overflow:auto; border-radius: 16px; border:1px solid var(--stroke); }
+    table{ width:100%; border-collapse: collapse; min-width: 740px; }
+    th, td{
+      padding: 12px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      vertical-align: top;
     }
-    .table th,.table td{
-      padding:10px 10px; border-bottom:1px solid rgba(36,48,65,.7);
-      font-size:13px; text-align:left;
-    }
-    .table th{font-size:12px; color:var(--muted); font-weight:600; background: rgba(15,23,42,.6)}
-    .badge{
+    th{ color: var(--muted); font-weight: 600; font-size: 12px; text-align:left; }
+    td .muted{ color: var(--muted2); font-size: 12px; margin-top: 2px; }
+    .pill{
       display:inline-flex; align-items:center; gap:6px;
-      font-size:12px; padding:6px 10px; border-radius:999px;
-      border:1px solid var(--line); background: rgba(15,23,42,.55)
+      padding: 6px 10px; border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      font-size: 12px;
     }
-    .dot{width:8px;height:8px;border-radius:999px;background:var(--muted)}
-    .dot.good{background:var(--good)}
-    .dot.warn{background:var(--warn)}
-    .dot.bad{background:var(--bad)}
-    .progress{
-      width:100%; height:10px; border-radius: 999px;
-      background: rgba(36,48,65,.8); overflow:hidden;
+    .pill.income{ border-color: rgba(53,208,127,.28); background: rgba(53,208,127,.10); }
+    .pill.expense{ border-color: rgba(255,90,122,.28); background: rgba(255,90,122,.10); }
+
+    .amount{ font-variant-numeric: tabular-nums; white-space:nowrap; }
+    .amount.income{ color: rgba(53,208,127,.95); }
+    .amount.expense{ color: rgba(255,90,122,.95); }
+
+    /* Delete cross */
+    .xbtn{
+      width:30px; height:30px;
+      border-radius: 10px;
+      display:grid; place-items:center;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      cursor:pointer;
     }
-    .progress > div{height:100%; width:0%; background: linear-gradient(90deg, var(--accent), var(--accent2))}
-    .goal{
-      border:1px solid var(--line);
+    .xbtn:hover{ background: rgba(255,255,255,.10); }
+    .xbtn:active{ transform: translateY(1px); }
+    .xbtn svg{ opacity:.9; }
+
+    /* Mobile: table -> cards */
+    .txCards{ display:none; gap:10px; }
+    .txCard{
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      border-radius: 18px;
+      padding: 12px 12px;
+    }
+    .txTop{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .txTitle{ font-weight:700; }
+    .txMeta{ color:var(--muted); font-size:12px; margin-top:4px; }
+    .txNote{ color:var(--muted2); font-size:12px; margin-top:8px; }
+
+    @media (max-width: 760px){
+      .tableWrap{ display:none; }
+      .txCards{ display:grid; }
+    }
+
+    /* Bottom bar */
+    .bottomBar{
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      padding: 10px 10px 16px;
+      z-index: 999;
+      background: linear-gradient(180deg, rgba(7,10,18,0), rgba(7,10,18,.75) 25%, rgba(7,10,18,.92) 60%, rgba(7,10,18,.98) 100%);
+      backdrop-filter: blur(10px);
+    }
+    .bottomInner{
+      width:min(1100px, 92vw);
+      margin: 0 auto;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .nav{
+      display:flex; gap:10px; align-items:center;
+      padding: 8px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(13,20,36,.62);
+      box-shadow: var(--shadow);
+    }
+    .navBtn{
+      display:flex; align-items:center; gap:8px;
+      padding: 10px 12px;
       border-radius: 14px;
-      background: rgba(15,23,42,.55);
-      padding:12px;
-      display:flex; flex-direction:column; gap:10px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--muted);
+      cursor:pointer;
+      user-select:none;
+      transition: background .12s ease, color .12s ease, border-color .12s ease;
+      white-space:nowrap;
     }
-    .goalTop{display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap}
-    .goalName{font-weight:700}
-    .goalMeta{font-size:12px;color:var(--muted)}
-    .goalActions{display:flex; gap:8px; flex-wrap:wrap}
-    .miniBtn{
-      padding:8px 10px; border-radius: 12px;
-      border:1px solid rgba(96,165,250,.45); background: rgba(96,165,250,.12);
-      color:var(--text); cursor:pointer; font-size:12px;
+    .navBtn.active{
+      color: var(--text);
+      background: rgba(255,255,255,.08);
+      border-color: rgba(255,255,255,.12);
     }
-    .miniBtn:hover{background: rgba(96,165,250,.18)}
-    .split{
-      display:grid; grid-template-columns: 1fr 1fr; gap:12px;
+    .navBtn svg{ opacity:.85; }
+    .syncArea{ display:flex; gap:10px; align-items:center; }
+
+    /* Toast status */
+    .toast{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 110px;
+      z-index: 1000;
+      min-width: min(520px, 92vw);
+      padding: 12px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(13,20,36,.92);
+      box-shadow: var(--shadow);
+      display:none;
     }
-    @media (max-width: 980px){.split{grid-template-columns: 1fr}}
-    .hint{
+    .toast.show{ display:block; }
+    .toastTop{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .toastTitle{ font-weight:700; }
+    .toastMsg{ color:var(--muted); margin-top:4px; font-size:12px; }
+    .toast.ok{ border-color: rgba(53,208,127,.35); }
+    .toast.bad{ border-color: rgba(255,90,122,.35); }
+    .toast.warn{ border-color: rgba(255,204,102,.35); }
+
+    /* Dashboard blocks */
+    .grid2{ display:grid; grid-template-columns: 1.1fr .9fr; gap:14px; }
+    @media (max-width: 980px){ .grid2{ grid-template-columns: 1fr; } }
+    .miniList{ display:grid; gap:10px; }
+    .miniItem{
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.04);
+    }
+    .miniItem .name{ font-weight:650; }
+    .miniItem .val{ font-variant-numeric: tabular-nums; white-space:nowrap; }
+    .miniItem .sub{ color:var(--muted2); font-size:12px; margin-top:2px; }
+
+    /* Goals page motivation bar chart */
+    .motWrap{
+      display:grid; gap:10px;
+      padding: 10px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+    }
+    .motChart{
+      display:grid;
+      gap:10px;
+    }
+    .motBar{
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      overflow:hidden;
+      position:relative;
+    }
+    .motFill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(53,208,127,.45), rgba(106,163,255,.55));
+    }
+    .motLabels{
+      display:flex; justify-content:space-between; gap:10px;
       font-size:12px; color:var(--muted);
-      border-left: 3px solid rgba(96,165,250,.55);
-      padding: 8px 10px; background: rgba(15,23,42,.35); border-radius: 12px;
     }
-    .danger{
-      border-left-color: rgba(239,68,68,.7);
-    }
-    .ok{
-      border-left-color: rgba(34,197,94,.7);
-    }
-    .hidden{display:none !important}
-    .footerNote{margin-top:14px; font-size:12px; color:var(--muted)}
-    .small{font-size:12px}
+    .hr{ height:1px; background: rgba(255,255,255,.08); margin: 10px 0; }
   </style>
 </head>
-
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <div class="logo"></div>
-      <div class="title">
-        <b>Finance OS</b>
-        <span>Пульт · Дашборд · Цели · Мотивация</span>
-      </div>
-    </div>
-
-    <div class="tabs">
-      <div class="tab active" data-tab="pult">Раздел 1 · Пульт</div>
-      <div class="tab" data-tab="dash">Раздел 2 · Дашборд</div>
-      <div class="tab" data-tab="settings">Настройки</div>
-    </div>
-
-    <div class="rightbar">
-      <div class="pill" id="pillStatus">Статус: <span class="muted" id="statusText">не синхронизировано</span></div>
-      <button class="btn" id="btnSync">Синхронизировать</button>
-    </div>
-  </header>
-
-  <!-- ===================== PULT ===================== -->
-  <section id="tab-pult">
-    <div class="grid cols-2">
-      <div class="card">
-        <h3>Еженедельный ввод</h3>
-
-        <div class="row">
-          <div class="field" style="min-width:160px;flex:0.7">
-            <label>Дата</label>
-            <input type="date" id="txDate" />
+  <div class="app">
+    <div class="container">
+      <div class="top">
+        <div class="brand">
+          <div class="logo"></div>
+          <div>
+            <h1>Finance OS</h1>
+            <div class="sub" id="subtitle">Пульт · Дашборд · Цели · Настройки</div>
           </div>
-
-          <div class="field" style="min-width:160px;flex:0.7">
-            <label>Тип</label>
-            <select id="txType">
-              <option value="expense">Расход</option>
-              <option value="income">Доход</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label>Категория</label>
-            <select id="txCategory"></select>
-          </div>
-
-          <div class="field">
-            <label>Подкатегория (опционально)</label>
-            <input id="txSubcategory" placeholder="например: продукты / такси / проект..." />
-          </div>
-
-          <div class="field" style="min-width:160px;flex:0.6">
-            <label>Сумма</label>
-            <input id="txAmount" type="number" min="0" step="1" placeholder="₽" />
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px">
-          <div class="field" style="flex:1.8">
-            <label>Комментарий</label>
-            <input id="txNote" placeholder="коротко: что это было" />
-          </div>
-          <div class="field" style="flex:0.6; min-width: 220px">
-            <label>&nbsp;</label>
-            <button class="btn" id="btnAddTx">Добавить операцию</button>
-          </div>
-        </div>
-
-        <div class="hint" style="margin-top:12px">
-          Подсказка: это “фронт” для Google Sheets через Worker + Apps Script.
-          Если ты уже перенёс ключ в Worker ENV — оставь <span class="muted">API_KEY</span> пустым в настройках.
-        </div>
-
-        <div style="margin-top:12px" class="split">
-          <div class="card" style="padding:12px; background: rgba(15,23,42,.55); box-shadow:none">
-            <h3 style="margin-bottom:8px">Текущая неделя</h3>
-            <div class="kpis" style="grid-template-columns: repeat(3,1fr)">
-              <div class="kpi">
-                <div class="label">Доход</div>
-                <div class="value" id="wkIncome">—</div>
-              </div>
-              <div class="kpi">
-                <div class="label">Расход</div>
-                <div class="value" id="wkExpense">—</div>
-              </div>
-              <div class="kpi">
-                <div class="label">Баланс</div>
-                <div class="value" id="wkNet">—</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" style="padding:12px; background: rgba(15,23,42,.55); box-shadow:none">
-            <h3 style="margin-bottom:8px">Правило “можно/нельзя тратить”</h3>
-            <div id="spendRuleBox" class="hint">Синхронизируй данные, чтобы увидеть ограничения по бюджету.</div>
-          </div>
-        </div>
-
-        <div style="margin-top:12px; overflow:auto">
-          <table class="table" id="weekTable">
-            <thead>
-              <tr>
-                <th>Дата</th>
-                <th>Тип</th>
-                <th>Категория</th>
-                <th>Сумма</th>
-                <th>Комментарий</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <div class="footerNote">
-          Если после добавления операции она не появилась — нажми “Синхронизировать”.
         </div>
       </div>
 
-      <div class="card">
-        <h3>Цели + мотивация</h3>
-
-        <div class="split">
-          <div>
-            <div class="row" style="justify-content:space-between; margin-bottom:10px">
-              <div class="badge"><span class="dot"></span> Цели из Google Sheets</div>
-              <span class="small muted" id="goalsCount">—</span>
-            </div>
-
-            <div id="goalsList" style="display:flex; flex-direction:column; gap:10px"></div>
-
-            <div class="footerNote">
-              Цели редактируются в таблице (лист <b>Goals</b>) или через кнопки “+10k / +25k / +50k”.
+      <!-- PULT -->
+      <section id="page-pult" class="page">
+        <div class="card">
+          <div class="hd">
+            <h2>Операции</h2>
+            <div style="display:flex; gap:10px; align-items:center;">
+              <button class="btn small" id="btnQuickSync">Синхронизировать</button>
             </div>
           </div>
-
-          <div>
-            <div class="row" style="justify-content:space-between; margin-bottom:10px">
-              <div class="badge"><span class="dot"></span> Мотивационная шкала</div>
-              <span class="small muted" id="motivationHint">—</span>
+          <div class="bd">
+            <div class="row cols3">
+              <div>
+                <label>Диапазон: с</label>
+                <input type="date" id="fromDate" />
+              </div>
+              <div>
+                <label>по</label>
+                <input type="date" id="toDate" />
+              </div>
+              <div style="display:flex; align-items:flex-end; gap:10px;">
+                <button class="btn primary" id="btnAddOpen">Добавить операцию</button>
+                <button class="btn" id="btnApplyFilter">Применить</button>
+              </div>
             </div>
 
-            <div class="goal">
-              <div class="goalTop">
-                <div>
-                  <div class="goalName">Уровни дохода (в месяц)</div>
-                  <div class="goalMeta">Сделаем так, чтобы 180к был “побочным эффектом”</div>
+            <div style="height:12px"></div>
+
+            <!-- Mobile cards -->
+            <div class="txCards" id="txCards"></div>
+
+            <!-- Desktop table -->
+            <div class="tableWrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Дата</th>
+                    <th>Тип</th>
+                    <th>Категория</th>
+                    <th>Сумма</th>
+                    <th>Комментарий</th>
+                    <th style="width:48px"></th>
+                  </tr>
+                </thead>
+                <tbody id="txTbody"></tbody>
+              </table>
+            </div>
+
+            <div style="margin-top:12px; color:var(--muted); font-size:12px;">
+              Если после добавления операции она не появилась — нажми “Синхронизировать”.
+            </div>
+          </div>
+        </div>
+
+        <div style="height:14px"></div>
+
+        <div class="card">
+          <div class="hd">
+            <h2>План накоплений на ключевые события</h2>
+          </div>
+          <div class="bd" id="eventsPlan">
+            <div style="color:var(--muted)">Пока заглушка: можно подключить позже (или вынести в Google Sheets).</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DASHBOARD -->
+      <section id="page-dash" class="page" style="display:none;">
+        <div class="grid2">
+          <div class="card">
+            <div class="hd">
+              <h2>Сводка</h2>
+              <div class="pill" id="dashRangePill">Диапазон</div>
+            </div>
+            <div class="bd" id="dashSummary">
+              <div class="row cols3">
+                <div class="miniItem">
+                  <div>
+                    <div class="name">Доходы</div>
+                    <div class="sub">за период</div>
+                  </div>
+                  <div class="val amount income" id="sumIncome">0 ₽</div>
+                </div>
+                <div class="miniItem">
+                  <div>
+                    <div class="name">Расходы</div>
+                    <div class="sub">за период</div>
+                  </div>
+                  <div class="val amount expense" id="sumExpense">0 ₽</div>
+                </div>
+                <div class="miniItem">
+                  <div>
+                    <div class="name">Баланс</div>
+                    <div class="sub">доходы − расходы</div>
+                  </div>
+                  <div class="val amount" id="sumBalance">0 ₽</div>
                 </div>
               </div>
-              <div id="ladder" style="display:flex; flex-direction:column; gap:10px"></div>
-              <div class="hint ok" id="motivationBox">Синхронизируй данные, чтобы увидеть текущий уровень.</div>
             </div>
+          </div>
 
-            <div class="goal">
-              <div class="goalTop">
+          <div class="card">
+            <div class="hd">
+              <h2>ТОП категорий</h2>
+            </div>
+            <div class="bd">
+              <div class="row cols2">
                 <div>
-                  <div class="goalName">План накоплений на ключевые события</div>
-                  <div class="goalMeta">Сколько откладывать ежемесячно (простая оценка)</div>
+                  <div class="pill income" style="margin-bottom:10px;">ТОП доходов</div>
+                  <div class="miniList" id="topIncomeCats"></div>
+                </div>
+                <div>
+                  <div class="pill expense" style="margin-bottom:10px;">ТОП расходов</div>
+                  <div class="miniList" id="topExpenseCats"></div>
                 </div>
               </div>
-              <div id="savingsPlan" class="hint">Синхронизируй данные, чтобы оценить доступный “зазор”.</div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </section>
+      </section>
 
-  <!-- ===================== DASHBOARD ===================== -->
-  <section id="tab-dash" class="hidden">
-    <div class="card">
-      <h3>Фильтры периода</h3>
-      <div class="row">
-        <div class="field" style="min-width:210px; flex:0.9">
-          <label>Период</label>
-          <select id="periodType">
-            <option value="week">Неделя</option>
-            <option value="month" selected>Месяц</option>
-            <option value="quarter">Квартал</option>
-            <option value="year">Год</option>
-            <option value="custom">Произвольный</option>
-          </select>
-        </div>
+      <!-- GOALS -->
+      <section id="page-goals" class="page" style="display:none;">
+        <div class="card">
+          <div class="hd">
+            <h2>Цели</h2>
+            <button class="btn primary" id="btnGoalAdd">Добавить цель</button>
+          </div>
+          <div class="bd">
+            <div id="goalsList" class="miniList"></div>
 
-        <div class="field" style="min-width:210px; flex:0.9">
-          <label>Опорная дата</label>
-          <input type="date" id="anchorDate" />
-        </div>
+            <div class="hr"></div>
 
-        <div class="field" style="min-width:210px; flex:0.9" id="customFromWrap" class="hidden">
-          <label>От</label>
-          <input type="date" id="customFrom" />
-        </div>
-
-        <div class="field" style="min-width:210px; flex:0.9" id="customToWrap" class="hidden">
-          <label>До</label>
-          <input type="date" id="customTo" />
-        </div>
-
-        <div class="field" style="min-width:210px; flex:0.6">
-          <label>Сравнить с предыдущим периодом</label>
-          <select id="compareMode">
-            <option value="on" selected>Да</option>
-            <option value="off">Нет</option>
-          </select>
-        </div>
-
-        <div class="field" style="min-width:220px; flex:0.6">
-          <label>&nbsp;</label>
-          <button class="btn" id="btnApply">Применить</button>
-        </div>
-      </div>
-
-      <div class="kpis" style="margin-top:12px">
-        <div class="kpi">
-          <div class="label">Доход (период)</div>
-          <div class="value" id="kIncome">—</div>
-          <div class="delta neu" id="dIncome">—</div>
-        </div>
-        <div class="kpi">
-          <div class="label">Расход (период)</div>
-          <div class="value" id="kExpense">—</div>
-          <div class="delta neu" id="dExpense">—</div>
-        </div>
-        <div class="kpi">
-          <div class="label">Баланс</div>
-          <div class="value" id="kNet">—</div>
-          <div class="delta neu" id="dNet">—</div>
-        </div>
-        <div class="kpi">
-          <div class="label">Норма накоплений</div>
-          <div class="value" id="kSaveRate">—</div>
-          <div class="delta neu" id="dSaveRate">—</div>
-        </div>
-      </div>
-
-      <div class="hint" style="margin-top:12px" id="forecastBox">Синхронизируй данные, чтобы увидеть прогноз.</div>
-    </div>
-
-    <div class="grid cols-2">
-      <div class="card">
-        <h3>Динамика доходов и расходов</h3>
-        <canvas id="chartFlow" height="130"></canvas>
-      </div>
-
-      <div class="card">
-        <h3>Баланс (доход − расход)</h3>
-        <canvas id="chartNet" height="130"></canvas>
-      </div>
-    </div>
-
-    <div class="grid cols-2">
-      <div class="card">
-        <h3>Структура расходов (период)</h3>
-        <canvas id="pieExpense" height="160"></canvas>
-      </div>
-
-      <div class="card">
-        <h3>Структура доходов (период)</h3>
-        <canvas id="pieIncome" height="160"></canvas>
-      </div>
-    </div>
-
-    <div class="grid cols-2">
-      <div class="card">
-        <h3>Лимиты по категориям (месяц)</h3>
-        <div class="hint">Лимиты храним локально в браузере (localStorage). Если нужно — добавим эндпоинты в Apps Script для хранения в Google Sheets.</div>
-        <div style="margin-top:10px; overflow:auto">
-          <table class="table" id="budgetTable">
-            <thead>
-              <tr>
-                <th>Категория</th>
-                <th>Лимит/мес</th>
-                <th>Потрачено</th>
-                <th>Осталось</th>
-                <th>Статус</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <div class="row" style="margin-top:10px">
-          <button class="btn" id="btnEditBudgets">Редактировать лимиты</button>
-          <button class="btn" id="btnResetBudgets">Сбросить лимиты</button>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Топ категорий (период)</h3>
-        <div id="topCats" class="hint">Синхронизируй данные, чтобы увидеть топ.</div>
-
-        <h3 style="margin-top:14px">Период-таблица</h3>
-        <div style="overflow:auto">
-          <table class="table" id="periodTable">
-            <thead>
-              <tr>
-                <th>Дата</th>
-                <th>Тип</th>
-                <th>Категория</th>
-                <th>Сумма</th>
-                <th>Комментарий</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <div class="footerNote">
-          Сравнение: “аналогичный предыдущий период” — это такой же по длине отрезок непосредственно перед текущим.
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===================== SETTINGS ===================== -->
-  <section id="tab-settings" class="hidden">
-    <div class="grid cols-2">
-      <div class="card">
-        <h3>API-настройки</h3>
-        <div class="hint danger">
-          Если API_KEY уже хранится в Cloudflare Worker (env/API_KEY), то оставь поле API_KEY пустым.
-          <br/>Если ключ нужен на клиенте (временно) — он будет виден пользователю страницы.
-        </div>
-
-        <div class="row" style="margin-top:12px">
-          <div class="field">
-            <label>API_URL (Cloudflare Worker)</label>
-            <input id="cfgApiUrl" placeholder="https://xxxx.workers.dev/" />
+            <h3 style="margin:0 0 10px; font-size:14px;">Мотивационная шкала</h3>
+            <div class="motWrap">
+              <div class="motChart">
+                <div class="motBar"><div class="motFill" id="motFill"></div></div>
+                <div class="motLabels">
+                  <div id="motMinLabel">Стабильность · 150 000 ₽</div>
+                  <div id="motMaxLabel">Цель 2026 · 0 ₽</div>
+                </div>
+              </div>
+              <div style="color:var(--muted); font-size:12px;">
+                Шкала считается по текущему среднему доходу/балансу за выбранный период (можно поменять формулу).
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div class="row" style="margin-top:10px">
-          <div class="field">
-            <label>API_KEY (опционально)</label>
-            <input id="cfgApiKey" placeholder="оставь пустым, если ключ в Worker ENV" />
+      <!-- SETTINGS -->
+      <section id="page-settings" class="page" style="display:none;">
+        <div class="card">
+          <div class="hd">
+            <h2>Настройки</h2>
+            <div style="display:flex; gap:10px;">
+              <button class="btn" id="btnRunTests">Тесты</button>
+              <button class="btn primary" id="btnSaveSettings">Сохранить</button>
+            </div>
+          </div>
+          <div class="bd">
+            <div class="row cols2">
+              <div class="card" style="box-shadow:none;">
+                <div class="hd"><h2>Мотивационная шкала</h2></div>
+                <div class="bd">
+                  <div class="row cols2">
+                    <div>
+                      <label>Низ (стабильность), ₽</label>
+                      <input type="number" id="setMotMin" />
+                    </div>
+                    <div>
+                      <label>Верх (цель 2026), ₽</label>
+                      <input type="number" id="setMotMax" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card" style="box-shadow:none;">
+                <div class="hd"><h2>Диапазон по умолчанию</h2></div>
+                <div class="bd">
+                  <div class="row cols2">
+                    <div>
+                      <label>С</label>
+                      <input type="date" id="setDefaultFrom" />
+                    </div>
+                    <div>
+                      <label>По</label>
+                      <input type="date" id="setDefaultTo" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <div class="card" style="box-shadow:none;">
+              <div class="hd">
+                <h2>Категории (хранятся в Google Sheets)</h2>
+                <button class="btn small" id="btnAddCategory">+ Добавить</button>
+              </div>
+              <div class="bd">
+                <div id="catsEditor" class="miniList"></div>
+              </div>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <div class="card" style="box-shadow:none;">
+              <div class="hd">
+                <h2>Лимиты (хранятся в Google Sheets)</h2>
+                <button class="btn small" id="btnAddLimit">+ Добавить</button>
+              </div>
+              <div class="bd">
+                <div id="limitsEditor" class="miniList"></div>
+              </div>
+            </div>
+
           </div>
         </div>
+      </section>
 
-        <div class="row" style="margin-top:10px">
-          <button class="btn" id="btnSaveCfg">Сохранить</button>
-          <button class="btn" id="btnTestCfg">Тест соединения</button>
-        </div>
-
-        <div class="footerNote">
-          Конфиг хранится локально в браузере. Если нужно — добавим логин и хранение профиля.
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>Категории по умолчанию</h3>
-        <div class="hint">Ты можешь добавлять новые категории просто в выпадающий список (в коде). Для “профессионального” режима — вынесем в Google Sheets и будем читать конфиг оттуда.</div>
-        <pre class="hint" style="white-space:pre-wrap" id="catsPreview"></pre>
-      </div>
     </div>
-
-    <div class="card" style="margin-top:14px">
-      <h3>Редактор лимитов</h3>
-      <div class="hint">Лимиты используются для правила “можно/нельзя тратить” и для таблицы бюджетов.</div>
-      <div id="budgetsEditor"></div>
-      <div class="row" style="margin-top:10px">
-        <button class="btn" id="btnSaveBudgets">Сохранить лимиты</button>
-      </div>
-    </div>
-  </section>
-
-  <div class="footerNote">
-    Версия: <span class="muted">MVP 1.0</span> · Данные операций/целей — Google Sheets · Лимиты — localStorage (пока).
   </div>
-</div>
 
-<script>
-  const API_BASE = "https://rough-breeze-5ac6.chatgptnik.workers.dev";
-
-async function apiFetch(action, { method = "GET", params = {}, body = null } = {}) {
-  const url = new URL(API_BASE);
-  url.searchParams.set("action", action);
-  Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-
-  const res = await fetch(url.toString(), {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : null,
-  });
-
-  const text = await res.text();
-  let json;
-  try { json = JSON.parse(text); } catch { throw new Error(`API not JSON: ${text.slice(0,200)}`); }
-
-  if (!res.ok || json.ok === false) {
-    throw new Error(json?.error || `HTTP ${res.status}`);
-  }
-  return json.data;
-}
-/* =======================
-   CONFIG
-   ======================= */
-// ВАЖНО: укажи URL твоего Cloudflare Worker:
-const DEFAULT_API_URL = "https://rough-breeze-5ac6.chatgptnik.workers.dev/";
-
-// Если ключ уже хранится в Worker ENV (рекомендуется) — оставь пустым:
-const DEFAULT_API_KEY = "";
-
-/* =======================
-   CATEGORIES (твоя структура)
-   ======================= */
-const CATEGORIES = [
-  { group: "База жизни", items: [
-    "Жильё (аренда/коммуналка/интернет)",
-    "Мобильная связь/Интернет",
-    "Продукты",
-    "Общественный транспорт",
-    "Автомобиль",
-    "Медицинские расходы (регулярные)",
-    "Страховки",
-    "Подписки (не рабочие)",
-  ]},
-  { group: "Переменные", items: [
-    "Кафе/доставка",
-    "Одежда/обувь",
-    "Цветы",
-    "Красота/уход",
-    "Спонтанные покупки",
-    "Небольшие поездки/выходные",
-    "Ремонт квартиры",
-  ]},
-  { group: "Профессиональные", items: [
-    "Подписки и сервисы (ИИ/хостинги/домен)",
-    "Обучение",
-  ]},
-  { group: "Будущее", items: [
-    "Накопления",
-    "Инвестиции",
-    "Резервный фонд",
-  ]},
-  { group: "Радость", items: [
-    "Путешествия",
-    "Хобби",
-    "Подарки",
-    "Развлечения",
-  ]},
-  { group: "Доходы", items: [
-    "Зарплата",
-    "Проекты",
-    "Разовое",
-    "Другое",
-  ]}
-];
-
-/* =======================
-   BUDGETS (лимиты) — localStorage
-   ======================= */
-const DEFAULT_BUDGETS = {
-  // Задай “разумные” стартовые лимиты (можно потом отредактировать в UI)
-  "Жильё (аренда/коммуналка/интернет)": 45000,
-  "Мобильная связь/Интернет": 1500,
-  "Продукты": 25000,
-  "Общественный транспорт": 4000,
-  "Автомобиль": 12000,
-  "Медицинские расходы (регулярные)": 4000,
-  "Страховки": 0, // обычно разово — можно оставить 0
-  "Подписки (не рабочие)": 1500,
-
-  "Кафе/доставка": 12000,
-  "Одежда/обувь": 6000,
-  "Цветы": 3000,
-  "Красота/уход": 3000,
-  "Спонтанные покупки": 5000,
-  "Небольшие поездки/выходные": 6000,
-  "Ремонт квартиры": 0,
-
-  "Подписки и сервисы (ИИ/хостинги/домен)": 3000,
-  "Обучение": 3000,
-
-  "Накопления": 0,
-  "Инвестиции": 0,
-  "Резервный фонд": 0,
-
-  "Путешествия": 0,
-  "Хобби": 2000,
-  "Подарки": 4000,
-  "Развлечения": 3000,
-};
-
-/* =======================
-   MOTIVATION LADDER
-   — “180к как побочный эффект”
-   ======================= */
-const LADDER_LEVELS = [
-  { name: "Стабильность", target: 150000, note: "держу базу, без просадок" },
-  { name: "Уверенный шаг", target: 165000, note: "добавил небольшой проект/подработку" },
-  { name: "Побочный эффект", target: 180000, note: "не давлю на себя — просто усиливаю рычаги" },
-  { name: "Комфорт", target: 200000, note: "регулярные проекты + рост ставки" },
-  { name: "Сильный режим", target: 250000, note: "системный поток клиентов" },
-  { name: "Мощь", target: 300000, note: "масштабирование" },
-  { name: "Цель-2026", target: 350000, note: "переход на другой уровень" },
-];
-
-/* =======================
-   API CLIENT (Worker + Apps Script)
-   ======================= */
-function loadConfig(){
-  const cfg = JSON.parse(localStorage.getItem("finance_cfg") || "{}");
-  return {
-    apiUrl: cfg.apiUrl || DEFAULT_API_URL,
-    apiKey: cfg.apiKey ?? DEFAULT_API_KEY,
-  };
-}
-function saveConfig(cfg){
-  localStorage.setItem("finance_cfg", JSON.stringify(cfg));
-}
-function getApi(){
-  const { apiUrl, apiKey } = loadConfig();
-  const API_URL = apiUrl;
-  const API_KEY = apiKey || "";
-  async function apiGet(action, params = {}) {
-    const url = new URL(API_URL);
-    url.searchParams.set("action", action);
-    // Если Worker сам добавляет key — оставляем пустым.
-    if (API_KEY) url.searchParams.set("key", API_KEY);
-    for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
-
-    const res = await fetch(url.toString());
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "API error");
-    return data.data;
-  }
-  async function apiPost(action, payload = {}) {
-    const body = { action, ...payload };
-    if (API_KEY) body.key = API_KEY;
-
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
-    if (!data.ok) throw new Error(data.error || "API error");
-    return data.data;
-  }
-  return { apiGet, apiPost };
-}
-
-/* =======================
-   STATE
-   ======================= */
-let ALL_TX = [];      // transactions cache
-let ALL_GOALS = [];   // goals cache
-let charts = { flow:null, net:null, pieExp:null, pieInc:null };
-
-function setStatus(text, ok=true){
-  document.getElementById("statusText").textContent = text;
-  const pill = document.getElementById("pillStatus");
-  pill.style.borderColor = ok ? "rgba(34,197,94,.35)" : "rgba(239,68,68,.35)";
-  pill.style.background = ok ? "rgba(34,197,94,.08)" : "rgba(239,68,68,.08)";
-}
-
-function money(n){
-  const v = Math.round(Number(n||0));
-  return v.toLocaleString("ru-RU") + " ₽";
-}
-function pct(n){
-  const v = Number(n||0);
-  return (v*100).toFixed(1) + "%";
-}
-function parseDate(s){
-  // expects YYYY-MM-DD
-  const [y,m,d] = String(s).slice(0,10).split("-").map(Number);
-  return new Date(y, (m||1)-1, d||1);
-}
-function fmtDate(d){
-  const y = d.getFullYear();
-  const m = String(d.getMonth()+1).padStart(2,"0");
-  const dd = String(d.getDate()).padStart(2,"0");
-  return `${y}-${m}-${dd}`;
-}
-function startOfWeek(d){
-  const x = new Date(d);
-  const day = (x.getDay()+6)%7; // Mon=0
-  x.setDate(x.getDate()-day);
-  x.setHours(0,0,0,0);
-  return x;
-}
-function endOfWeek(d){
-  const s = startOfWeek(d);
-  const e = new Date(s);
-  e.setDate(e.getDate()+6);
-  e.setHours(23,59,59,999);
-  return e;
-}
-function startOfMonth(d){
-  return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-function endOfMonth(d){
-  return new Date(d.getFullYear(), d.getMonth()+1, 0, 23,59,59,999);
-}
-function startOfQuarter(d){
-  const q = Math.floor(d.getMonth()/3);
-  return new Date(d.getFullYear(), q*3, 1);
-}
-function endOfQuarter(d){
-  const s = startOfQuarter(d);
-  return new Date(s.getFullYear(), s.getMonth()+3, 0, 23,59,59,999);
-}
-function startOfYear(d){
-  return new Date(d.getFullYear(), 0, 1);
-}
-function endOfYear(d){
-  return new Date(d.getFullYear(), 11, 31, 23,59,59,999);
-}
-function clampRange(from, to){
-  const f = new Date(from); f.setHours(0,0,0,0);
-  const t = new Date(to); t.setHours(23,59,59,999);
-  return [f,t];
-}
-function daysBetween(a,b){
-  const ms = 24*3600*1000;
-  return Math.ceil((b - a)/ms);
-}
-
-/* =======================
-   BUDGETS helpers
-   ======================= */
-function loadBudgets(){
-  const raw = localStorage.getItem("finance_budgets");
-  if (!raw) return { ...DEFAULT_BUDGETS };
-  try{
-    const b = JSON.parse(raw);
-    return { ...DEFAULT_BUDGETS, ...b };
-  }catch{
-    return { ...DEFAULT_BUDGETS };
-  }
-}
-function saveBudgets(b){
-  localStorage.setItem("finance_budgets", JSON.stringify(b));
-}
-function allExpenseCategories(){
-  const out = [];
-  for (const g of CATEGORIES){
-    if (g.group === "Доходы") continue;
-    out.push(...g.items);
-  }
-  return out;
-}
-
-/* =======================
-   UI INIT
-   ======================= */
-function initCategories(){
-  const sel = document.getElementById("txCategory");
-  sel.innerHTML = "";
-  for (const g of CATEGORIES){
-    const og = document.createElement("optgroup");
-    og.label = g.group;
-    for (const it of g.items){
-      const opt = document.createElement("option");
-      opt.value = it;
-      opt.textContent = it;
-      og.appendChild(opt);
-    }
-    sel.appendChild(og);
-  }
-  document.getElementById("catsPreview").textContent =
-    CATEGORIES.map(g => `• ${g.group}\n  - ${g.items.join("\n  - ")}`).join("\n\n");
-}
-function initDates(){
-  const today = new Date();
-  document.getElementById("txDate").value = fmtDate(today);
-  document.getElementById("anchorDate").value = fmtDate(today);
-  document.getElementById("customFrom").value = fmtDate(startOfMonth(today));
-  document.getElementById("customTo").value = fmtDate(endOfMonth(today));
-}
-
-function initTabs(){
-  document.querySelectorAll(".tab").forEach(t => {
-    t.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-      t.classList.add("active");
-      const name = t.dataset.tab;
-      document.getElementById("tab-pult").classList.toggle("hidden", name !== "pult");
-      document.getElementById("tab-dash").classList.toggle("hidden", name !== "dash");
-      document.getElementById("tab-settings").classList.toggle("hidden", name !== "settings");
-    });
-  });
-}
-
-function initSettingsUI(){
-  const cfg = loadConfig();
-  document.getElementById("cfgApiUrl").value = cfg.apiUrl;
-  document.getElementById("cfgApiKey").value = cfg.apiKey || "";
-
-  document.getElementById("btnSaveCfg").addEventListener("click", () => {
-    saveConfig({
-      apiUrl: document.getElementById("cfgApiUrl").value.trim(),
-      apiKey: document.getElementById("cfgApiKey").value.trim(),
-    });
-    setStatus("конфиг сохранён", true);
-  });
-
-  document.getElementById("btnTestCfg").addEventListener("click", async () => {
-    try{
-      const { apiGet } = getApi();
-      await apiGet("getGoals");
-      setStatus("тест OK", true);
-      alert("Соединение OK (getGoals вернул успех).");
-    }catch(e){
-      setStatus("ошибка соединения", false);
-      alert("Ошибка: " + e.message);
-    }
-  });
-
-  renderBudgetsEditor();
-  document.getElementById("btnSaveBudgets").addEventListener("click", () => {
-    const inputs = document.querySelectorAll("[data-budget-key]");
-    const b = loadBudgets();
-    inputs.forEach(inp => {
-      const k = inp.dataset.budgetKey;
-      b[k] = Number(inp.value || 0);
-    });
-    saveBudgets(b);
-    alert("Лимиты сохранены.");
-    renderBudgetsEditor();
-    if (!document.getElementById("tab-dash").classList.contains("hidden")){
-      renderBudgetsTable(); renderSpendRule();
-    }
-  });
-}
-
-function renderBudgetsEditor(){
-  const host = document.getElementById("budgetsEditor");
-  const b = loadBudgets();
-  const cats = allExpenseCategories();
-  host.innerHTML = `
-    <div class="grid cols-3">
-      ${cats.map(c => `
-        <div class="kpi">
-          <div class="label">${escapeHtml(c)}</div>
-          <input data-budget-key="${escapeAttr(c)}" type="number" min="0" step="1" value="${Number(b[c]||0)}" />
-        </div>
-      `).join("")}
+  <!-- Bottom bar -->
+  <div class="bottomBar">
+    <div class="bottomInner">
+      <div class="nav" role="tablist" aria-label="Навигация">
+        <button class="navBtn active" data-page="pult">
+          <span>Пульт</span>
+        </button>
+        <button class="navBtn" data-page="dash">
+          <span>Дашборд</span>
+        </button>
+        <button class="navBtn" data-page="goals">
+          <span>Цели</span>
+        </button>
+        <button class="navBtn" data-page="settings">
+          <span>Настройки</span>
+        </button>
+      </div>
+      <div class="syncArea">
+        <button class="btn primary" id="btnSync">Синхронизировать</button>
+      </div>
     </div>
-  `;
-}
+  </div>
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-}
-function escapeAttr(s){
-  return String(s).replace(/"/g,'&quot;');
-}
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <div class="toastTop">
+      <div>
+        <div class="toastTitle" id="toastTitle">Статус</div>
+        <div class="toastMsg" id="toastMsg">...</div>
+      </div>
+      <button class="btn small ghost" id="toastClose">Закрыть</button>
+    </div>
+  </div>
 
-/* =======================
-   SYNC
-   ======================= */
-async function syncAll(){
-  const btn = document.getElementById("btnSync");
-  btn.disabled = true;
-  setStatus("синхронизация...", true);
+  <!-- Add Transaction Modal (simple prompt-based, lightweight) -->
 
-  try{
-    const { apiGet } = getApi();
+  <script>
+    /***********************
+     * CONFIG
+     ***********************/
+    const API_URL = "https://YOUR_WORKER_URL_HERE"; // <-- поставь URL Cloudflare Worker
+    const API_KEY = ""; // можно оставить пустым, если ключ вставляется на воркере в env.API_KEY
 
-    // Достаём данные “пачкой” (можно расширить)
-const yearFrom = "2025-01-01";
-const yearTo   = "2026-12-31";
+    /***********************
+     * STATE
+     ***********************/
+    let ALL_TX = [];
+    let GOALS = [];
+    let CATEGORIES = []; // [{type,income|expense, category, subcategory}]
+    let LIMITS = [];     // [{type,income|expense, category, limit, period}]
+    let SETTINGS = {
+      defaultFrom: "",
+      defaultTo: "",
+      motivationMin: 150000,
+      motivationMax: 0
+    };
 
-    const [txResp, goalsResp] = await Promise.all([
-      apiGet("listTransactions", { from: yearFrom, to: yearTo }),
-      apiGet("getGoals"),
-    ]);
+    /***********************
+     * HELPERS
+     ***********************/
+    const $ = (id)=>document.getElementById(id);
 
-    ALL_TX = (txResp.items || []).map(x => ({
-      ...x,
-      amount: Number(x.amount||0),
-      date: String(x.date).slice(0,10),
-      _d: parseDate(x.date)
-    }));
+    function fmtMoney(n){
+      const v = Number(n || 0);
+      return v.toLocaleString("ru-RU") + " ₽";
+    }
+    function todayISO(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      const dd = String(d.getDate()).padStart(2,"0");
+      return `${y}-${m}-${dd}`;
+    }
+    function monthStartISO(){
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,"0");
+      return `${y}-${m}-01`;
+    }
+    function clamp01(x){ return Math.max(0, Math.min(1, x)); }
 
-    ALL_GOALS = (goalsResp.items || []).map(g => ({
-      ...g,
-      amount: Number(g.amount||0),
-      saved: Number(g.saved||0),
-      due: g.due ? String(g.due).slice(0,10) : "",
-      start: g.start ? String(g.start).slice(0,10) : "",
-      _due: g.due ? parseDate(g.due) : null,
-      _start: g.start ? parseDate(g.start) : null,
-    }));
+    function toastShow(kind, title, msg){
+      const t = $("toast");
+      t.classList.remove("ok","bad","warn");
+      t.classList.add("show");
+      if (kind) t.classList.add(kind);
+      $("toastTitle").textContent = title || "Статус";
+      $("toastMsg").textContent = msg || "";
+    }
+    function toastHide(){ $("toast").classList.remove("show"); }
 
-    setStatus("синхронизировано", true);
+    function parseDateISO(s){
+      // expects YYYY-MM-DD
+      if (!s) return new Date(NaN);
+      const [y,m,d] = String(s).slice(0,10).split("-").map(Number);
+      return new Date(y, (m||1)-1, d||1);
+    }
 
-    renderWeek();
-    renderGoals();
-    renderMotivation();
-    renderSpendRule();
-    renderSavingsPlan();
+    /***********************
+     * API
+     ***********************/
+    async function apiGet(action, params = {}){
+      const url = new URL(API_URL);
+      url.searchParams.set("action", action);
+      if (API_KEY) url.searchParams.set("key", API_KEY);
+      for (const [k,v] of Object.entries(params)) url.searchParams.set(k, v);
 
-    // Dash initial render
-    applyDash();
+      const res = await fetch(url.toString(), { method:"GET" });
+      const json = await res.json();
+      if (json && json.ok === false) throw new Error(json.error || "API error");
+      return json.data ?? json;
+    }
 
-  }catch(e){
-    console.error(e);
-    setStatus("ошибка синхронизации", false);
-    alert("Ошибка синхронизации: " + e.message);
-  }finally{
-    btn.disabled = false;
-  }
-}
+    async function apiPost(action, payload = {}){
+      const body = { action, ...payload };
+      if (API_KEY) body.key = API_KEY;
 
-/* =======================
-   ADD TRANSACTION
-   ======================= */
-async function addTransaction(){
-  const date = document.getElementById("txDate").value;
-  const type = document.getElementById("txType").value;
-  const category = document.getElementById("txCategory").value;
-  const subcategory = document.getElementById("txSubcategory").value.trim();
-  const amount = Number(document.getElementById("txAmount").value || 0);
-  const note = document.getElementById("txNote").value.trim();
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      if (json && json.ok === false) throw new Error(json.error || "API error");
+      return json.data ?? json;
+    }
 
-  if (!date) return alert("Выбери дату.");
-  if (!category) return alert("Выбери категорию.");
-  if (!amount || amount <= 0) return alert("Введи сумму > 0.");
+    /***********************
+     * LOCAL STORAGE
+     ***********************/
+    const LS = {
+      tx: "finance_tx_v3",
+      goals: "finance_goals_v3",
+      cats: "finance_cats_v3",
+      limits: "finance_limits_v3",
+      settings: "finance_settings_v3"
+    };
 
-  const btn = document.getElementById("btnAddTx");
-  btn.disabled = true;
+    function loadLocal(){
+      try{
+        ALL_TX = JSON.parse(localStorage.getItem(LS.tx) || "[]");
+        GOALS = JSON.parse(localStorage.getItem(LS.goals) || "[]");
+        CATEGORIES = JSON.parse(localStorage.getItem(LS.cats) || "[]");
+        LIMITS = JSON.parse(localStorage.getItem(LS.limits) || "[]");
+        SETTINGS = Object.assign(SETTINGS, JSON.parse(localStorage.getItem(LS.settings) || "{}"));
+      }catch{}
+    }
+    function saveLocal(){
+      localStorage.setItem(LS.tx, JSON.stringify(ALL_TX));
+      localStorage.setItem(LS.goals, JSON.stringify(GOALS));
+      localStorage.setItem(LS.cats, JSON.stringify(CATEGORIES));
+      localStorage.setItem(LS.limits, JSON.stringify(LIMITS));
+      localStorage.setItem(LS.settings, JSON.stringify(SETTINGS));
+    }
 
-  try{
-    const { apiPost } = getApi();
-    await apiPost("addTransaction", { date, type, category, subcategory, amount, note });
-    setStatus("операция добавлена", true);
+    /***********************
+     * ROUTER / NAV
+     ***********************/
+    function setPage(page){
+      const pages = ["pult","dash","goals","settings"];
+      for (const p of pages){
+        $("page-"+p).style.display = (p===page) ? "" : "none";
+      }
+      document.querySelectorAll(".navBtn").forEach(b=>{
+        b.classList.toggle("active", b.dataset.page === page);
+      });
+      if (page==="dash") renderDashboard();
+      if (page==="goals") renderGoals();
+      if (page==="settings") renderSettingsEditors();
+    }
 
-    // быстрая локальная вставка + перерендер (и потом можно синк)
-    ALL_TX.unshift({ id: "local", date, type, category, subcategory, amount, note, createdAt: new Date().toISOString(), _d: parseDate(date) });
+    /***********************
+     * RENDER: TRANSACTIONS
+     ***********************/
+    function renderTransactions(){
+      // ensure _d for filtering
+      const tx = ALL_TX.map(x => ({
+        ...x,
+        _d: parseDateISO(x.date)
+      }));
 
-    // очистка
-    document.getElementById("txAmount").value = "";
-    document.getElementById("txNote").value = "";
+      const from = $("fromDate").value || SETTINGS.defaultFrom || monthStartISO();
+      const to = $("toDate").value || SETTINGS.defaultTo || todayISO();
+      const f = parseDateISO(from);
+      const t = parseDateISO(to);
 
-    renderWeek();
-    renderSpendRule();
-    applyDash(false); // без перезагрузки, но обновить
+      const filtered = tx.filter(x => x._d >= f && x._d <= t)
+        .sort((a,b)=> (a.date < b.date ? 1 : (a.date > b.date ? -1 : 0)));
 
-  }catch(e){
-    console.error(e);
-    setStatus("ошибка добавления", false);
-    alert("Ошибка: " + e.message);
-  }finally{
-    btn.disabled = false;
-  }
-}
+      // desktop table
+      const tb = $("txTbody");
+      tb.innerHTML = "";
+      for (const x of filtered){
+        const tr = document.createElement("tr");
+        const typeRu = (x.type==="income") ? "Доход" : "Расход";
 
-/* =======================
-   WEEK VIEW (PULT)
-   ======================= */
-function txInRange(from,to){
-  const [f,t] = clampRange(from,to);
-  return ALL_TX.filter(x => x._d >= f && x._d <= t);
-}
-function sumByType(items){
-  let inc=0, exp=0;
-  for (const x of items){
-    if (x.type === "income") inc += x.amount;
-    else exp += x.amount;
-  }
-  return { inc, exp, net: inc-exp };
-}
-function renderWeek(){
-  const now = new Date();
-  const f = startOfWeek(now);
-  const t = endOfWeek(now);
+        tr.innerHTML = `
+          <td>${x.date}</td>
+          <td><span class="pill ${x.type}">${typeRu}</span></td>
+          <td>
+            <div style="font-weight:700;">${escapeHtml(x.category || "")}</div>
+            <div class="muted">${escapeHtml(x.subcategory || "")}</div>
+          </td>
+          <td class="amount ${x.type}">${fmtMoney(x.amount)}</td>
+          <td>${escapeHtml(x.note || "")}</td>
+          <td>
+            <button class="xbtn" title="Удалить" data-id="${x.id}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+          </td>
+        `;
+        tb.appendChild(tr);
+      }
 
-  const items = txInRange(f,t).sort((a,b)=>b._d - a._d);
-  const { inc, exp, net } = sumByType(items);
-
-  document.getElementById("wkIncome").textContent = money(inc);
-  document.getElementById("wkExpense").textContent = money(exp);
-  document.getElementById("wkNet").textContent = money(net);
-
-  const tbody = document.querySelector("#weekTable tbody");
-  tbody.innerHTML = items.slice(0,50).map(x => `
-    <tr>
-      <td>${escapeHtml(x.date)}</td>
-      <td>${x.type === "income" ? "Доход" : "Расход"}</td>
-      <td>${escapeHtml(x.category)}${x.subcategory ? `<div class="muted small">${escapeHtml(x.subcategory)}</div>`:""}</td>
-      <td>${money(x.amount)}</td>
-      <td class="muted">${escapeHtml(x.note||"")}</td>
-    </tr>
-  `).join("") || `<tr><td colspan="5" class="muted">На этой неделе пока нет операций.</td></tr>`;
-}
-
-/* =======================
-   GOALS
-   ======================= */
-function renderGoals(){
-  const host = document.getElementById("goalsList");
-  document.getElementById("goalsCount").textContent = `Целей: ${ALL_GOALS.length}`;
-
-  if (!ALL_GOALS.length){
-    host.innerHTML = `<div class="hint">Пока нет целей. Добавь их в Google Sheets на листе <b>Goals</b> (name, amount, due, start, saved, priority).</div>`;
-    return;
-  }
-
-  const today = new Date();
-  host.innerHTML = ALL_GOALS
-    .sort((a,b)=> (b.amount-b.saved) - (a.amount-a.saved))
-    .map(g => {
-      const pctDone = g.amount > 0 ? Math.min(1, g.saved / g.amount) : 0;
-      const left = Math.max(0, g.amount - g.saved);
-      const daysLeft = g._due ? Math.max(0, daysBetween(today, g._due)) : null;
-
-      return `
-        <div class="goal">
-          <div class="goalTop">
+      // mobile cards
+      const cards = $("txCards");
+      cards.innerHTML = "";
+      for (const x of filtered){
+        const typeRu = (x.type==="income") ? "Доход" : "Расход";
+        const el = document.createElement("div");
+        el.className = "txCard";
+        el.innerHTML = `
+          <div class="txTop">
             <div>
-              <div class="goalName">${escapeHtml(g.name)}</div>
-              <div class="goalMeta">
-                Цель: <b>${money(g.amount)}</b> · Накоплено: <b>${money(g.saved)}</b> · Осталось: <b>${money(left)}</b>
-                ${g.due ? ` · Дедлайн: <b>${escapeHtml(g.due)}</b>` : ""}
-                ${daysLeft !== null ? ` · Осталось дней: <b>${daysLeft}</b>` : ""}
-              </div>
+              <div class="txTitle">${escapeHtml(x.category || "")}</div>
+              <div class="txMeta">${x.date} · ${typeRu}${x.subcategory ? " · " + escapeHtml(x.subcategory) : ""}</div>
             </div>
-            <div class="goalActions">
-              <button class="miniBtn" data-add-goal="${escapeAttr(g.name)}" data-add-sum="10000">+10k</button>
-              <button class="miniBtn" data-add-goal="${escapeAttr(g.name)}" data-add-sum="25000">+25k</button>
-              <button class="miniBtn" data-add-goal="${escapeAttr(g.name)}" data-add-sum="50000">+50k</button>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <div class="amount ${x.type}">${fmtMoney(x.amount)}</div>
+              <button class="xbtn" title="Удалить" data-id="${x.id}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
             </div>
           </div>
-          <div class="progress"><div style="width:${(pctDone*100).toFixed(1)}%"></div></div>
-        </div>
-      `;
-    }).join("");
+          ${x.note ? `<div class="txNote">${escapeHtml(x.note)}</div>` : ``}
+        `;
+        cards.appendChild(el);
+      }
 
-  host.querySelectorAll("[data-add-goal]").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const name = btn.dataset.addGoal;
-      const add = Number(btn.dataset.addSum||0);
-      const g = ALL_GOALS.find(x => x.name === name);
-      if (!g) return;
+      // attach delete handlers
+      document.querySelectorAll(".xbtn[data-id]").forEach(btn=>{
+        btn.onclick = async ()=>{
+          const id = btn.dataset.id;
+          const item = ALL_TX.find(t=>t.id===id);
+          if (!item) return;
 
+          const ok = confirm(`Удалить операцию?\n\n${item.date} · ${item.category} · ${fmtMoney(item.amount)}`);
+          if (!ok) return;
+
+          await deleteTransaction(id);
+        };
+      });
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+    }
+
+    /***********************
+     * RENDER: DASHBOARD
+     ***********************/
+    function renderDashboard(){
+      const from = $("fromDate").value || SETTINGS.defaultFrom || monthStartISO();
+      const to = $("toDate").value || SETTINGS.defaultTo || todayISO();
+      $("dashRangePill").textContent = `Период: ${from} — ${to}`;
+
+      const f = parseDateISO(from);
+      const t = parseDateISO(to);
+
+      const tx = ALL_TX
+        .map(x=>({ ...x, _d: parseDateISO(x.date) }))
+        .filter(x=> x._d >= f && x._d <= t);
+
+      const sumIncome = tx.filter(x=>x.type==="income").reduce((a,x)=>a+Number(x.amount||0),0);
+      const sumExpense = tx.filter(x=>x.type==="expense").reduce((a,x)=>a+Number(x.amount||0),0);
+      const balance = sumIncome - sumExpense;
+
+      $("sumIncome").textContent = fmtMoney(sumIncome);
+      $("sumExpense").textContent = fmtMoney(sumExpense);
+      $("sumBalance").textContent = fmtMoney(balance);
+      $("sumBalance").className = "val amount " + (balance>=0 ? "income" : "expense");
+
+      // TOP categories separated
+      const topIncome = topByCategory(tx.filter(x=>x.type==="income"));
+      const topExpense = topByCategory(tx.filter(x=>x.type==="expense"));
+
+      renderTopList($("topIncomeCats"), topIncome, "income");
+      renderTopList($("topExpenseCats"), topExpense, "expense");
+    }
+
+    function topByCategory(arr){
+      const map = new Map();
+      for (const x of arr){
+        const key = (x.category || "Без категории");
+        map.set(key, (map.get(key)||0) + Number(x.amount||0));
+      }
+      const list = [...map.entries()].map(([name,val])=>({name,val}));
+      list.sort((a,b)=>b.val-a.val);
+      return list.slice(0,6);
+    }
+
+    function renderTopList(root, list, kind){
+      root.innerHTML = "";
+      if (!list.length){
+        root.innerHTML = `<div style="color:var(--muted); font-size:12px;">Нет данных</div>`;
+        return;
+      }
+      for (const x of list){
+        const el = document.createElement("div");
+        el.className = "miniItem";
+        el.innerHTML = `
+          <div>
+            <div class="name">${escapeHtml(x.name)}</div>
+            <div class="sub">${kind==="income"?"доходы":"расходы"}</div>
+          </div>
+          <div class="val amount ${kind}">${fmtMoney(x.val)}</div>
+        `;
+        root.appendChild(el);
+      }
+    }
+
+    /***********************
+     * RENDER: GOALS + MOTIVATION
+     ***********************/
+    function renderGoals(){
+      const root = $("goalsList");
+      root.innerHTML = "";
+
+      if (!GOALS.length){
+        root.innerHTML = `<div style="color:var(--muted); font-size:12px;">Целей пока нет. Нажми “Добавить цель”.</div>`;
+      } else {
+        for (const g of GOALS.slice().sort((a,b)=>(a.priority||"").localeCompare(b.priority||""))){
+          const el = document.createElement("div");
+          el.className = "miniItem";
+          el.innerHTML = `
+            <div>
+              <div class="name">${escapeHtml(g.name)}</div>
+              <div class="sub">${g.due ? `Срок: ${g.due}` : ""}</div>
+            </div>
+            <div class="val">${fmtMoney(g.saved)} / ${fmtMoney(g.amount)}</div>
+          `;
+          root.appendChild(el);
+        }
+      }
+
+      // Motivation chart
+      const from = $("fromDate").value || SETTINGS.defaultFrom || monthStartISO();
+      const to = $("toDate").value || SETTINGS.defaultTo || todayISO();
+      const f = parseDateISO(from);
+      const t = parseDateISO(to);
+      const tx = ALL_TX.map(x=>({ ...x, _d: parseDateISO(x.date) })).filter(x=>x._d>=f && x._d<=t);
+
+      const sumIncome = tx.filter(x=>x.type==="income").reduce((a,x)=>a+Number(x.amount||0),0);
+      const sumExpense = tx.filter(x=>x.type==="expense").reduce((a,x)=>a+Number(x.amount||0),0);
+      const balance = sumIncome - sumExpense;
+
+      const min = Number(SETTINGS.motivationMin || 150000);
+      const max = Number(SETTINGS.motivationMax || 0);
+      $("motMinLabel").textContent = `Стабильность · ${fmtMoney(min)}`;
+      $("motMaxLabel").textContent = `Цель 2026 · ${fmtMoney(max)}`;
+
+      let pct = 0;
+      if (max > min){
+        pct = clamp01((balance - min) / (max - min));
+      } else if (min > 0){
+        pct = clamp01(balance / min);
+      }
+      $("motFill").style.width = (pct * 100).toFixed(1) + "%";
+    }
+
+    /***********************
+     * SETTINGS EDITORS
+     ***********************/
+    function renderSettingsEditors(){
+      $("setMotMin").value = String(SETTINGS.motivationMin || 150000);
+      $("setMotMax").value = String(SETTINGS.motivationMax || 0);
+      $("setDefaultFrom").value = SETTINGS.defaultFrom || "";
+      $("setDefaultTo").value = SETTINGS.defaultTo || "";
+
+      // categories editor
+      const root = $("catsEditor");
+      root.innerHTML = "";
+      if (!CATEGORIES.length){
+        root.innerHTML = `<div style="color:var(--muted); font-size:12px;">Категорий пока нет. Нажми “+ Добавить”.</div>`;
+      } else {
+        CATEGORIES.forEach((c, idx)=>{
+          const el = document.createElement("div");
+          el.className = "miniItem";
+          el.innerHTML = `
+            <div style="flex:1;">
+              <div class="row cols3">
+                <div>
+                  <label>Тип</label>
+                  <select data-cat-idx="${idx}" data-field="type">
+                    <option value="expense" ${c.type==="expense"?"selected":""}>Расход</option>
+                    <option value="income" ${c.type==="income"?"selected":""}>Доход</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Категория</label>
+                  <input data-cat-idx="${idx}" data-field="category" value="${escapeAttr(c.category||"")}" />
+                </div>
+                <div>
+                  <label>Подкатегория</label>
+                  <input data-cat-idx="${idx}" data-field="subcategory" value="${escapeAttr(c.subcategory||"")}" />
+                </div>
+              </div>
+            </div>
+            <button class="btn danger small" data-cat-del="${idx}">Удалить</button>
+          `;
+          root.appendChild(el);
+        });
+      }
+
+      // limits editor
+      const lroot = $("limitsEditor");
+      lroot.innerHTML = "";
+      if (!LIMITS.length){
+        lroot.innerHTML = `<div style="color:var(--muted); font-size:12px;">Лимитов пока нет. Нажми “+ Добавить”.</div>`;
+      } else {
+        LIMITS.forEach((l, idx)=>{
+          const el = document.createElement("div");
+          el.className = "miniItem";
+          el.innerHTML = `
+            <div style="flex:1;">
+              <div class="row cols3">
+                <div>
+                  <label>Тип</label>
+                  <select data-lim-idx="${idx}" data-field="type">
+                    <option value="expense" ${l.type==="expense"?"selected":""}>Расход</option>
+                    <option value="income" ${l.type==="income"?"selected":""}>Доход</option>
+                  </select>
+                </div>
+                <div>
+                  <label>Категория</label>
+                  <input data-lim-idx="${idx}" data-field="category" value="${escapeAttr(l.category||"")}" />
+                </div>
+                <div>
+                  <label>Лимит (₽/мес)</label>
+                  <input type="number" data-lim-idx="${idx}" data-field="limit" value="${escapeAttr(l.limit||0)}" />
+                </div>
+              </div>
+            </div>
+            <button class="btn danger small" data-lim-del="${idx}">Удалить</button>
+          `;
+          lroot.appendChild(el);
+        });
+      }
+
+      // bind changes
+      document.querySelectorAll("[data-cat-idx]").forEach(inp=>{
+        inp.onchange = inp.oninput = ()=>{
+          const idx = Number(inp.dataset.catIdx);
+          const field = inp.dataset.field;
+          CATEGORIES[idx][field] = inp.value;
+          saveLocal();
+        };
+      });
+      document.querySelectorAll("[data-cat-del]").forEach(btn=>{
+        btn.onclick = ()=>{
+          const idx = Number(btn.dataset.catDel);
+          CATEGORIES.splice(idx,1);
+          saveLocal();
+          renderSettingsEditors();
+        };
+      });
+
+      document.querySelectorAll("[data-lim-idx]").forEach(inp=>{
+        inp.onchange = inp.oninput = ()=>{
+          const idx = Number(inp.dataset.limIdx);
+          const field = inp.dataset.field;
+          LIMITS[idx][field] = (field==="limit") ? Number(inp.value||0) : inp.value;
+          saveLocal();
+        };
+      });
+      document.querySelectorAll("[data-lim-del]").forEach(btn=>{
+        btn.onclick = ()=>{
+          const idx = Number(btn.dataset.limDel);
+          LIMITS.splice(idx,1);
+          saveLocal();
+          renderSettingsEditors();
+        };
+      });
+    }
+
+    function escapeAttr(s){
+      return String(s ?? "").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
+
+    /***********************
+     * ACTIONS
+     ***********************/
+    async function syncAll(){
+      toastShow("warn","Синхронизация","Получаю данные из Google Sheets…");
       try{
-        const { apiPost } = getApi();
-        const newSaved = (g.saved||0) + add;
-        await apiPost("updateGoalSaved", { name, saved: newSaved });
-        g.saved = newSaved;
+        const from = $("fromDate").value || SETTINGS.defaultFrom || "2025-01-01";
+        const to = $("toDate").value || SETTINGS.defaultTo || "2026-12-31";
+
+        const txResp = await apiGet("listTransactions", { from, to });
+        ALL_TX = (txResp.items || txResp.data?.items || []);
+
+        // подтянем цели/категории/лимиты/настройки
+        const goalsResp = await apiGet("getGoals");
+        GOALS = (goalsResp.items || goalsResp.data?.items || []);
+
+        try{
+          const cfg = await apiGet("getConfig");
+          SETTINGS = Object.assign(SETTINGS, cfg.settings || {});
+          CATEGORIES = cfg.categories || CATEGORIES;
+          LIMITS = cfg.limits || LIMITS;
+        }catch(e){
+          // если getConfig пока не задеплоен — не падаем
+        }
+
+        saveLocal();
+        renderAll();
+
+        toastShow("ok","Синхронизировано","Данные обновлены.");
+        setTimeout(toastHide, 1400);
+      }catch(err){
+        toastShow("bad","Ошибка синхронизации", String(err.message || err));
+      }
+    }
+
+    async function deleteTransaction(id){
+      toastShow("warn","Удаление","Удаляю операцию…");
+      try{
+        await apiPost("deleteTransaction", { id });
+
+        // после удаления подтянем заново (или можно локально удалить)
+        ALL_TX = ALL_TX.filter(x=>x.id !== id);
+        saveLocal();
+        renderAll();
+
+        toastShow("ok","Удалено","Операция удалена.");
+        setTimeout(toastHide, 1200);
+      }catch(err){
+        toastShow("bad","Ошибка удаления", String(err.message || err));
+      }
+    }
+
+    async function addTransactionPrompt(){
+      const date = prompt("Дата (YYYY-MM-DD):", todayISO());
+      if (!date) return;
+      const type = prompt("Тип: income или expense:", "expense");
+      if (!type) return;
+      const category = prompt("Категория:", type==="income" ? "Зарплата" : "Другое") || "Другое";
+      const subcategory = prompt("Подкатегория (можно пусто):", "") || "";
+      const amountStr = prompt("Сумма (₽):", "1000");
+      if (!amountStr) return;
+      const note = prompt("Комментарий (можно пусто):", "") || "";
+      const amount = Number(String(amountStr).replace(/\s/g,"").replace(",","."));
+
+      toastShow("warn","Добавление","Сохраняю операцию…");
+      try{
+        await apiPost("addTransaction", { date, type, category, subcategory, amount, note });
+        await syncAll();
+      }catch(err){
+        toastShow("bad","Ошибка добавления", String(err.message || err));
+      }
+    }
+
+    async function saveSettingsToSheets(){
+      // читаем поля
+      SETTINGS.motivationMin = Number($("setMotMin").value || 150000);
+      SETTINGS.motivationMax = Number($("setMotMax").value || 0);
+      SETTINGS.defaultFrom = $("setDefaultFrom").value || "";
+      SETTINGS.defaultTo = $("setDefaultTo").value || "";
+
+      toastShow("warn","Настройки","Сохраняю в Google Sheets…");
+      try{
+        await apiPost("setConfig", {
+          settings: SETTINGS,
+          categories: CATEGORIES,
+          limits: LIMITS
+        });
+        saveLocal();
+        toastShow("ok","Сохранено","Настройки записаны в Google Sheets.");
+        setTimeout(toastHide, 1400);
+      }catch(err){
+        toastShow("bad","Ошибка сохранения", String(err.message || err));
+      }
+    }
+
+    async function runTests(){
+      toastShow("warn","Тесты","Проверяю связь Worker → GAS…");
+      try{
+        const ping = await apiGet("ping");
+        toastShow("ok","Тесты пройдены", `BUILD: ${ping.build} · ${ping.now}`);
+        setTimeout(toastHide, 1800);
+      }catch(err){
+        toastShow("bad","Тесты не пройдены", String(err.message || err));
+      }
+    }
+
+    function renderAll(){
+      renderTransactions();
+      renderDashboard();
+      renderGoals();
+    }
+
+    /***********************
+     * INIT
+     ***********************/
+    function init(){
+      loadLocal();
+
+      // default dates
+      $("fromDate").value = SETTINGS.defaultFrom || monthStartISO();
+      $("toDate").value = SETTINGS.defaultTo || todayISO();
+
+      renderAll();
+
+      // nav
+      document.querySelectorAll(".navBtn").forEach(b=>{
+        b.onclick = ()=> setPage(b.dataset.page);
+      });
+
+      // actions
+      $("btnSync").onclick = syncAll;
+      $("btnQuickSync").onclick = syncAll;
+      $("btnApplyFilter").onclick = ()=> renderAll();
+      $("btnAddOpen").onclick = addTransactionPrompt;
+
+      $("toastClose").onclick = toastHide;
+
+      $("btnGoalAdd").onclick = ()=>{
+        const name = prompt("Название цели:", "Новая цель");
+        if (!name) return;
+        const amount = Number(prompt("Сумма цели (₽):", "100000") || 0);
+        const due = prompt("Срок (YYYY-MM-DD, можно пусто):", "") || "";
+        const saved = Number(prompt("Уже накоплено (₽):", "0") || 0);
+        const priority = prompt("Приоритет (например A/B/C):", "B") || "";
+
+        GOALS.push({ name, amount, due, start:"", saved, priority });
+        saveLocal();
         renderGoals();
-        setStatus("цель обновлена", true);
-      }catch(e){
-        console.error(e);
-        setStatus("ошибка цели", false);
-        alert("Ошибка: " + e.message);
-      }
-    });
-  });
-}
+        toastShow("warn","Важно","Цели сохраняются в Sheets через синхронизацию GAS (в этом пакете — через getGoals/updateGoalSaved). Если хочешь CRUD целей — скажи, добавлю эндпоинты addGoal/deleteGoal/updateGoal.");
+        setTimeout(toastHide, 2200);
+      };
 
-/* =======================
-   MOTIVATION
-   — берём доход за последние 30 дней и “прокидываем” в эквивалент месяца
-   ======================= */
-function incomeLastNDays(n=30){
-  const now = new Date();
-  const from = new Date(now); from.setDate(from.getDate()-n+1); from.setHours(0,0,0,0);
-  const items = txInRange(from, now);
-  const inc = items.filter(x=>x.type==="income").reduce((s,x)=>s+x.amount,0);
-  return inc;
-}
-function renderMotivation(){
-  const host = document.getElementById("ladder");
-  const inc30 = incomeLastNDays(30);
-  const monthlyEq = inc30; // уже 30 дней = примерно месяц
-  const currentLevelIdx = [...LADDER_LEVELS].reverse().findIndex(l => monthlyEq >= l.target);
-  const idxFromStart = currentLevelIdx === -1 ? -1 : (LADDER_LEVELS.length - 1 - currentLevelIdx);
-  const current = idxFromStart >= 0 ? LADDER_LEVELS[idxFromStart] : null;
-  const next = idxFromStart >= 0 ? LADDER_LEVELS[Math.min(idxFromStart+1, LADDER_LEVELS.length-1)] : LADDER_LEVELS[0];
+      $("btnAddCategory").onclick = ()=>{
+        CATEGORIES.push({ type:"expense", category:"", subcategory:"" });
+        saveLocal();
+        renderSettingsEditors();
+      };
+      $("btnAddLimit").onclick = ()=>{
+        LIMITS.push({ type:"expense", category:"", limit:0, period:"month" });
+        saveLocal();
+        renderSettingsEditors();
+      };
 
-  document.getElementById("motivationHint").textContent =
-    `Доход за 30 дней: ${money(inc30)} (≈ месяц)`;
+      $("btnSaveSettings").onclick = saveSettingsToSheets;
+      $("btnRunTests").onclick = runTests;
 
-  host.innerHTML = LADDER_LEVELS.map((l, i) => {
-    const done = monthlyEq >= l.target;
-    const isBarrier = (l.target === 180000);
-    return `
-      <div class="badge" style="justify-content:space-between">
-        <span>
-          <span class="dot ${done ? "good" : "dot"}"></span>
-          <b>${escapeHtml(l.name)}</b> · ${money(l.target)}
-          ${isBarrier ? `<span class="muted"> · (180к как “побочный эффект”)</span>` : ""}
-          <div class="muted small">${escapeHtml(l.note)}</div>
-        </span>
-        <span class="muted">${done ? "✓" : ""}</span>
-      </div>
-    `;
-  }).join("");
-
-  const box = document.getElementById("motivationBox");
-  if (!current){
-    box.className = "hint";
-    box.textContent = `Текущий уровень ещё не зафиксирован. Следующий шаг: ${next.name} (${money(next.target)}).`;
-    return;
-  }
-  if (idxFromStart === LADDER_LEVELS.length-1){
-    box.className = "hint ok";
-    box.textContent = `Ты на максимальном уровне шкалы: ${current.name} (${money(current.target)}).`;
-    return;
-  }
-  const gap = Math.max(0, next.target - monthlyEq);
-  box.className = gap > 0 ? "hint" : "hint ok";
-  box.textContent = `Сейчас: ${current.name} (${money(current.target)}). До следующего: ${money(gap)} → ${next.name}.`;
-}
-
-/* =======================
-   SAVINGS PLAN (simple)
-   — оцениваем “зазор” в текущем месяце по лимитам
-   ======================= */
-function monthSpentByCategory(d){
-  const f = startOfMonth(d);
-  const t = endOfMonth(d);
-  const items = txInRange(f,t).filter(x=>x.type==="expense");
-  const by = {};
-  for (const x of items){
-    by[x.category] = (by[x.category]||0) + x.amount;
-  }
-  return by;
-}
-function renderSpendRule(){
-  const b = loadBudgets();
-  const now = new Date();
-  const spent = monthSpentByCategory(now);
-
-  // важные категории для “стопа”
-  const watch = [
-    "Кафе/доставка",
-    "Спонтанные покупки",
-    "Развлечения",
-    "Одежда/обувь",
-    "Цветы"
-  ];
-
-  let warnings = [];
-  for (const c of watch){
-    const limit = Number(b[c]||0);
-    if (!limit) continue;
-    const s = Number(spent[c]||0);
-    const ratio = s/limit;
-    if (ratio >= 1) warnings.push({c, status:"bad", text:`${c}: лимит исчерпан (${money(s)} / ${money(limit)})`});
-    else if (ratio >= 0.85) warnings.push({c, status:"warn", text:`${c}: близко к лимиту (${money(s)} / ${money(limit)})`});
-  }
-
-  const totalLimit = Object.values(b).reduce((s,x)=>s+Number(x||0),0);
-  const totalSpent = Object.values(spent).reduce((s,x)=>s+Number(x||0),0);
-  const remaining = totalLimit ? Math.max(0, totalLimit - totalSpent) : null;
-
-  const box = document.getElementById("spendRuleBox");
-  if (!totalLimit){
-    box.className = "hint";
-    box.textContent = "Лимиты не заданы. Зайди в Настройки → Редактор лимитов.";
-    return;
-  }
-
-  const status = totalSpent > totalLimit ? "bad" : (totalSpent > totalLimit*0.9 ? "warn" : "good");
-  box.className = "hint " + (status==="good" ? "ok" : "danger");
-  box.innerHTML = `
-    <b>${status==="good" ? "Можно тратить" : (status==="warn" ? "Осторожно" : "Нельзя тратить")}</b><br/>
-    Потрачено в этом месяце по лимитам: <b>${money(totalSpent)}</b> из <b>${money(totalLimit)}</b>
-    ${remaining !== null ? ` · осталось: <b>${money(remaining)}</b>` : ""}<br/>
-    ${warnings.length ? `<div style="margin-top:8px">${warnings.map(w => `• ${escapeHtml(w.text)}`).join("<br/>")}</div>` : `<div class="muted" style="margin-top:8px">Критичных превышений по “триггерным” категориям нет.</div>`}
-  `;
-}
-
-function renderSavingsPlan(){
-  const now = new Date();
-  const b = loadBudgets();
-  const spent = monthSpentByCategory(now);
-  const totalLimit = Object.values(b).reduce((s,x)=>s+Number(x||0),0);
-  const totalSpent = Object.values(spent).reduce((s,x)=>s+Number(x||0),0);
-
-  const incMonth = txInRange(startOfMonth(now), endOfMonth(now))
-    .filter(x=>x.type==="income").reduce((s,x)=>s+x.amount,0);
-
-  const free = Math.max(0, incMonth - totalSpent); // грубо: доход - расход по лимитируемым категориям
-  document.getElementById("savingsPlan").innerHTML = `
-    Оценка “зазора” в этом месяце (грубо):<br/>
-    Доход (месяц): <b>${money(incMonth)}</b><br/>
-    Расход (месяц, по лимитам): <b>${money(totalSpent)}</b> из <b>${money(totalLimit)}</b><br/>
-    Потенциально можно направить в цели: <b>${money(free)}</b>
-    <div class="muted small" style="margin-top:8px">
-      Это оценка: если часть расходов не покрыта лимитами, добавь лимиты или расширим правило.
-    </div>
-  `;
-}
-
-/* =======================
-   DASHBOARD (filters, compare, charts)
-   ======================= */
-function getPeriodRange(){
-  const type = document.getElementById("periodType").value;
-  const anchor = parseDate(document.getElementById("anchorDate").value);
-  if (type === "custom"){
-    const f = parseDate(document.getElementById("customFrom").value);
-    const t = parseDate(document.getElementById("customTo").value);
-    return clampRange(f,t);
-  }
-  if (type === "week") return clampRange(startOfWeek(anchor), endOfWeek(anchor));
-  if (type === "month") return clampRange(startOfMonth(anchor), endOfMonth(anchor));
-  if (type === "quarter") return clampRange(startOfQuarter(anchor), endOfQuarter(anchor));
-  if (type === "year") return clampRange(startOfYear(anchor), endOfYear(anchor));
-  return clampRange(startOfMonth(anchor), endOfMonth(anchor));
-}
-function getPrevRange(from, to){
-  const len = daysBetween(from,to) + 1;
-  const prevTo = new Date(from); prevTo.setDate(prevTo.getDate()-1);
-  const prevFrom = new Date(prevTo); prevFrom.setDate(prevFrom.getDate()-len+1);
-  return clampRange(prevFrom, prevTo);
-}
-
-function computeSummary(items){
-  const { inc, exp, net } = sumByType(items);
-  const saveRate = inc > 0 ? (net / inc) : 0;
-  return { inc, exp, net, saveRate };
-}
-
-function deltaText(curr, prev){
-  const diff = curr - prev;
-  const sign = diff > 0 ? "+" : "";
-  const rel = (prev !== 0) ? diff / Math.abs(prev) : null;
-  if (rel === null) return { cls:"neu", text: `${sign}${money(diff)} (нет базы)` };
-  const cls = diff > 0 ? "good" : (diff < 0 ? "bad" : "neu");
-  return { cls, text: `${sign}${money(diff)} (${sign}${(rel*100).toFixed(1)}%)` };
-}
-
-function groupSeries(items, mode){
-  // mode: "month" | "week"
-  const map = new Map();
-  for (const x of items){
-    const d = x._d;
-    let key, label;
-    if (mode === "month"){
-      key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}`;
-      label = key;
-    } else {
-      const s = startOfWeek(d);
-      key = fmtDate(s);
-      label = fmtDate(s);
+      // start on pult
+      setPage("pult");
     }
-    if (!map.has(key)) map.set(key, { label, inc:0, exp:0, net:0 });
-    const o = map.get(key);
-    if (x.type === "income") o.inc += x.amount; else o.exp += x.amount;
-    o.net = o.inc - o.exp;
-  }
-  const arr = [...map.values()].sort((a,b)=> a.label.localeCompare(b.label));
-  return arr;
-}
 
-function pieByCategory(items, type){
-  const by = {};
-  for (const x of items){
-    if (x.type !== type) continue;
-    const k = x.category || "Другое";
-    by[k] = (by[k]||0) + x.amount;
-  }
-  const arr = Object.entries(by).map(([k,v])=>({k,v})).sort((a,b)=>b.v-a.v);
-  return arr.slice(0,12);
-}
-
-function renderTopCats(items){
-  const exp = pieByCategory(items, "expense");
-  if (!exp.length){
-    document.getElementById("topCats").textContent = "Нет расходов в выбранном периоде.";
-    return;
-  }
-  document.getElementById("topCats").innerHTML =
-    exp.slice(0,8).map((x,i)=>`${i+1}. <b>${escapeHtml(x.k)}</b> — ${money(x.v)}`).join("<br/>");
-}
-
-function renderPeriodTable(items){
-  const tbody = document.querySelector("#periodTable tbody");
-  const rows = items.sort((a,b)=>b._d-a._d).slice(0,80);
-  tbody.innerHTML = rows.map(x=>`
-    <tr>
-      <td>${escapeHtml(x.date)}</td>
-      <td>${x.type==="income"?"Доход":"Расход"}</td>
-      <td>${escapeHtml(x.category)}${x.subcategory ? `<div class="muted small">${escapeHtml(x.subcategory)}</div>`:""}</td>
-      <td>${money(x.amount)}</td>
-      <td class="muted">${escapeHtml(x.note||"")}</td>
-    </tr>
-  `).join("") || `<tr><td colspan="5" class="muted">Нет операций за период.</td></tr>`;
-}
-
-function renderCharts(items){
-  const mode = (document.getElementById("periodType").value === "year") ? "month" : "week";
-  const series = groupSeries(items, mode);
-
-  const labels = series.map(x=>x.label);
-  const income = series.map(x=>x.inc);
-  const expense = series.map(x=>x.exp);
-  const net = series.map(x=>x.net);
-
-  // flow chart
-  if (charts.flow) charts.flow.destroy();
-  charts.flow = new Chart(document.getElementById("chartFlow"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        { label: "Доход", data: income, tension: .25 },
-        { label: "Расход", data: expense, tension: .25 },
-      ]
-    },
-    options: {
-      responsive:true,
-      plugins:{ legend:{ labels:{ color:"#e5e7eb" } } },
-      scales:{
-        x:{ ticks:{ color:"#9ca3af" }, grid:{ color:"rgba(36,48,65,.45)" } },
-        y:{ ticks:{ color:"#9ca3af" }, grid:{ color:"rgba(36,48,65,.45)" } },
-      }
-    }
-  });
-
-  // net chart
-  if (charts.net) charts.net.destroy();
-  charts.net = new Chart(document.getElementById("chartNet"), {
-    type: "line",
-    data: { labels, datasets: [ { label:"Баланс", data: net, tension:.25 } ] },
-    options: {
-      responsive:true,
-      plugins:{ legend:{ labels:{ color:"#e5e7eb" } } },
-      scales:{
-        x:{ ticks:{ color:"#9ca3af" }, grid:{ color:"rgba(36,48,65,.45)" } },
-        y:{ ticks:{ color:"#9ca3af" }, grid:{ color:"rgba(36,48,65,.45)" } },
-      }
-    }
-  });
-
-  // pies
-  const expPie = pieByCategory(items, "expense");
-  const incPie = pieByCategory(items, "income");
-
-  const pieColors = (n)=>Array.from({length:n}).map((_,i)=>`hsl(${(i*360/Math.max(1,n))|0} 70% 55%)`);
-
-  if (charts.pieExp) charts.pieExp.destroy();
-  charts.pieExp = new Chart(document.getElementById("pieExpense"), {
-    type:"doughnut",
-    data:{
-      labels: expPie.map(x=>x.k),
-      datasets:[{ data: expPie.map(x=>x.v), backgroundColor: pieColors(expPie.length) }]
-    },
-    options:{ plugins:{ legend:{ labels:{ color:"#e5e7eb" } } } }
-  });
-
-  if (charts.pieInc) charts.pieInc.destroy();
-  charts.pieInc = new Chart(document.getElementById("pieIncome"), {
-    type:"doughnut",
-    data:{
-      labels: incPie.map(x=>x.k),
-      datasets:[{ data: incPie.map(x=>x.v), backgroundColor: pieColors(incPie.length) }]
-    },
-    options:{ plugins:{ legend:{ labels:{ color:"#e5e7eb" } } } }
-  });
-}
-
-function forecastText(from,to){
-  // Простая модель: берем средние значения за последние 3 аналогичных периода и прогнозируем следующий
-  const len = daysBetween(from,to) + 1;
-  const periods = [];
-  let end = new Date(from); end.setDate(end.getDate()-1);
-
-  for (let i=0;i<3;i++){
-    const pTo = new Date(end);
-    const pFrom = new Date(pTo); pFrom.setDate(pFrom.getDate()-len+1);
-    const items = txInRange(pFrom,pTo);
-    periods.push(computeSummary(items));
-    end = new Date(pFrom); end.setDate(end.getDate()-1);
-  }
-  if (!periods.length) return "Недостаточно данных для прогноза.";
-
-  const avgInc = periods.reduce((s,p)=>s+p.inc,0)/periods.length;
-  const avgExp = periods.reduce((s,p)=>s+p.exp,0)/periods.length;
-  const avgNet = avgInc - avgExp;
-  const saveRate = avgInc>0 ? avgNet/avgInc : 0;
-
-  return `Прогноз на следующий аналогичный период (среднее последних 3): доход ≈ ${money(avgInc)}, расход ≈ ${money(avgExp)}, баланс ≈ ${money(avgNet)}, норма накоплений ≈ ${pct(saveRate)}.`;
-}
-
-function applyDash(showAlertIfNoData=true){
-  if (!ALL_TX.length && showAlertIfNoData){
-    // можно мягко
-  }
-
-  const [from,to] = getPeriodRange();
-  const items = txInRange(from,to);
-
-  const compareOn = document.getElementById("compareMode").value === "on";
-  const curr = computeSummary(items);
-
-  // KPIs
-  document.getElementById("kIncome").textContent = money(curr.inc);
-  document.getElementById("kExpense").textContent = money(curr.exp);
-  document.getElementById("kNet").textContent = money(curr.net);
-  document.getElementById("kSaveRate").textContent = pct(curr.saveRate);
-
-  if (compareOn){
-    const [pf,pt] = getPrevRange(from,to);
-    const prevItems = txInRange(pf,pt);
-    const prev = computeSummary(prevItems);
-
-    const di = deltaText(curr.inc, prev.inc);
-    const de = deltaText(curr.exp, prev.exp);
-    const dn = deltaText(curr.net, prev.net);
-    const ds = deltaText(curr.saveRate*100, prev.saveRate*100); // percentage points
-
-    document.getElementById("dIncome").className = "delta " + di.cls;
-    document.getElementById("dIncome").textContent = "Δ " + di.text;
-
-    document.getElementById("dExpense").className = "delta " + (de.cls === "good" ? "bad" : (de.cls === "bad" ? "good" : "neu"));
-    // логика: рост расхода — это “плохо”
-    document.getElementById("dExpense").textContent = "Δ " + de.text;
-
-    document.getElementById("dNet").className = "delta " + dn.cls;
-    document.getElementById("dNet").textContent = "Δ " + dn.text;
-
-    document.getElementById("dSaveRate").className = "delta " + (curr.saveRate >= prev.saveRate ? "good" : "bad");
-    document.getElementById("dSaveRate").textContent = `Δ ${(curr.saveRate-prev.saveRate>=0?"+":"")}${((curr.saveRate-prev.saveRate)*100).toFixed(1)} п.п.`;
-  }else{
-    ["dIncome","dExpense","dNet","dSaveRate"].forEach(id=>{
-      const el = document.getElementById(id);
-      el.className="delta neu";
-      el.textContent="—";
-    });
-  }
-
-  // Forecast
-  document.getElementById("forecastBox").textContent = forecastText(from,to);
-
-  // Charts + pies + tables
-  renderCharts(items);
-  renderTopCats(items);
-  renderPeriodTable(items);
-
-  // Budgets (current month)
-  renderBudgetsTable();
-  renderSpendRule();
-}
-
-function renderBudgetsTable(){
-  const b = loadBudgets();
-  const now = new Date();
-  const spent = monthSpentByCategory(now);
-
-  const tbody = document.querySelector("#budgetTable tbody");
-  const cats = allExpenseCategories();
-
-  const rows = cats.map(c => {
-    const limit = Number(b[c]||0);
-    const s = Number(spent[c]||0);
-    const left = Math.max(0, limit - s);
-    let status = "—", dot="dot";
-    if (limit > 0){
-      const ratio = s/limit;
-      if (ratio >= 1) { status = "СТОП"; dot = "dot bad"; }
-      else if (ratio >= 0.85) { status = "осторожно"; dot="dot warn"; }
-      else { status = "ok"; dot="dot good"; }
-    }
-    return { c, limit, s, left, status, dot };
-  }).sort((a,b)=> (b.s-b.left) - (a.s-a.left)); // чуть “по важности”
-
-  tbody.innerHTML = rows.map(r=>`
-    <tr>
-      <td>${escapeHtml(r.c)}</td>
-      <td>${money(r.limit)}</td>
-      <td>${money(r.s)}</td>
-      <td>${money(r.left)}</td>
-      <td><span class="badge"><span class="${r.dot}"></span>${escapeHtml(r.status)}</span></td>
-    </tr>
-  `).join("");
-}
-
-/* =======================
-   UI handlers
-   ======================= */
-function onPeriodTypeChange(){
-  const type = document.getElementById("periodType").value;
-  const custom = type === "custom";
-  document.getElementById("customFromWrap").classList.toggle("hidden", !custom);
-  document.getElementById("customToWrap").classList.toggle("hidden", !custom);
-}
-function initDashHandlers(){
-  document.getElementById("periodType").addEventListener("change", onPeriodTypeChange);
-  document.getElementById("btnApply").addEventListener("click", ()=>applyDash());
-  onPeriodTypeChange();
-
-  document.getElementById("btnEditBudgets").addEventListener("click", () => {
-    // переключаемся на настройки + скролл
-    document.querySelector('.tab[data-tab="settings"]').click();
-    document.getElementById("budgetsEditor").scrollIntoView({behavior:"smooth", block:"start"});
-  });
-
-  document.getElementById("btnResetBudgets").addEventListener("click", () => {
-    if (!confirm("Сбросить лимиты к значениям по умолчанию?")) return;
-    localStorage.removeItem("finance_budgets");
-    renderBudgetsEditor();
-    renderBudgetsTable();
-    renderSpendRule();
-  });
-}
-
-/* =======================
-   BOOT
-   ======================= */
-document.getElementById("btnSync").addEventListener("click", syncAll);
-document.getElementById("btnAddTx").addEventListener("click", addTransaction);
-
-initTabs();
-initCategories();
-initDates();
-initSettingsUI();
-initDashHandlers();
-
-// Автосинк при старте (мягко)
-setStatus("готово к синхронизации", true);
-
-window.addEventListener("load", () => {
-  syncAll();
-});
-</script>
+    init();
+  </script>
 </body>
 </html>
