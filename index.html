@@ -1,260 +1,1223 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Finance 2026</title>
 
   <style>
-    :root {
-      --bg: #0f1115;
-      --card: #1a1d24;
-      --text: #ffffff;
-      --muted: #9aa0aa;
-      --accent: #4da3ff;
-      --danger: #ff5c5c;
-      --success: #4caf50;
+    :root{
+      --bg:#0f1115; --card:#171a22; --card2:#1c2030;
+      --text:#e9eef6; --muted:#9aa3b2; --line:#2a3142;
+      --accent:#57a6ff; --danger:#ff5b6e; --ok:#41d38d; --warn:#ffcc66;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+      --navH: 70px;
+      --safeB: env(safe-area-inset-bottom, 0px);
+      --safeT: env(safe-area-inset-top, 0px);
     }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      padding-bottom: 72px;
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      padding-bottom: calc(var(--navH) + var(--safeB) + 12px);
+      -webkit-tap-highlight-color: transparent;
     }
-
-    .page {
-      display: none;
-      padding: 16px;
+    a{color:inherit}
+    .wrap{max-width:1100px; margin:0 auto; padding:14px; padding-top: calc(12px + var(--safeT));}
+    .grid{
+      display:grid; gap:12px;
+      grid-template-columns: 1fr;
     }
-    .page.active {
-      display: block;
+    @media (min-width: 980px){
+      .grid.cols2{grid-template-columns: 1.1fr .9fr;}
+      .grid.cols3{grid-template-columns: 1fr 1fr 1fr;}
+      .grid.cols2wide{grid-template-columns: 1.6fr .4fr;}
     }
-
-    .card {
-      background: var(--card);
-      border-radius: 12px;
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+      border:1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
       padding: 14px;
-      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
     }
-
-    h2 {
-      margin: 0 0 10px;
-      font-size: 18px;
+    .cardTitle{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin:0 0 10px 0;
     }
-
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      border: none;
-      font-size: 15px;
+    .cardTitle h2{
+      margin:0; font-size:16px; letter-spacing:.2px;
     }
-
-    button {
-      background: var(--accent);
-      color: #000;
-      font-weight: 600;
+    .muted{color:var(--muted); font-size:13px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    .row > *{flex:1 1 160px}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:7px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+      color: var(--muted); font-size:12px;
     }
-
-    .row {
-      display: flex;
-      gap: 8px;
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      width:100%;
+      padding:11px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(87,166,255,.18);
+      color: var(--text);
+      font-weight:700;
+      cursor:pointer;
+      user-select:none;
     }
-
-    .op {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid #2a2d35;
+    .btn:active{transform: translateY(1px)}
+    .btn.secondary{background: rgba(255,255,255,.06); font-weight:650}
+    .btn.danger{background: rgba(255,91,110,.18); border-color: rgba(255,91,110,.35)}
+    .btn.inline{width:auto; padding:9px 10px}
+    .btn.small{padding:8px 10px; font-size:13px}
+    .btn.ghost{
+      background: transparent;
+      border-color: rgba(255,255,255,.08);
     }
-
-    .op:last-child { border-bottom: none; }
-
-    .delete {
-      color: var(--danger);
-      cursor: pointer;
-      font-size: 14px;
+    input, select, textarea{
+      width:100%;
+      padding:11px 12px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      outline:none;
+      font-size:15px;
     }
+    textarea{min-height: 88px; resize: vertical;}
+    label{display:block; font-size:12px; color:var(--muted); margin: 0 0 6px 2px}
+    .field{margin-bottom:10px}
+    .kpi{
+      display:flex; flex-direction:column; gap:6px;
+      padding:12px; border-radius: 14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .kpi .val{font-size:18px; font-weight:800}
+    .kpi .sub{font-size:12px; color:var(--muted)}
+    .delta{font-size:12px; font-weight:700}
+    .delta.up{color: var(--ok)}
+    .delta.down{color: var(--danger)}
+    .delta.flat{color: var(--muted)}
+    .list{display:flex; flex-direction:column; gap:8px}
+    .item{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+      padding:10px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .item .left{display:flex; flex-direction:column; gap:4px; min-width:0}
+    .item .right{display:flex; align-items:center; gap:8px; flex-shrink:0}
+    .item .t{font-weight:800; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+    .item .d{color:var(--muted); font-size:12px}
+    .tag{
+      display:inline-flex; align-items:center;
+      padding:3px 8px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-size:12px;
+      background: rgba(255,255,255,.03);
+    }
+    .tag.income{border-color: rgba(65,211,141,.35); color: rgba(65,211,141,.95)}
+    .tag.expense{border-color: rgba(255,91,110,.35); color: rgba(255,91,110,.95)}
+    .tag.transfer{border-color: rgba(255,204,102,.35); color: rgba(255,204,102,.95)}
+    .hr{height:1px; background: rgba(255,255,255,.08); margin:12px 0}
+    .progress{
+      height:10px; border-radius: 999px; background: rgba(255,255,255,.06);
+      overflow:hidden; border:1px solid rgba(255,255,255,.06);
+    }
+    .progress > i{display:block; height:100%; width:0%;}
+    .hint{font-size:12px; color:var(--muted); line-height:1.35}
+    .sectionTitle{margin:0 0 10px 2px; font-size:13px; color: var(--muted)}
+    .tabs{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .tab{
+      padding:8px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      cursor:pointer;
+      user-select:none;
+      font-size:13px;
+      font-weight:750;
+    }
+    .tab.active{color: var(--text); border-color: rgba(87,166,255,.45); background: rgba(87,166,255,.14)}
+    /* pages */
+    .page{display:none}
+    .page.active{display:block}
 
     /* bottom nav */
-    .nav {
+    .nav{
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 64px;
-      background: #0c0e13;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      border-top: 1px solid #222;
-      z-index: 10;
+      left: 12px; right: 12px;
+      bottom: calc(10px + var(--safeB));
+      height: var(--navH);
+      border-radius: 18px;
+      background: rgba(10,12,18,.72);
+      border: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(14px);
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 10px 10px;
+      z-index: 50;
+      box-shadow: var(--shadow);
+      max-width: 1100px;
+      margin: 0 auto;
     }
-
-    .nav button {
-      background: none;
+    .nav .btnNav{
+      flex:1 1 auto;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:4px;
+      height:100%;
+      border-radius: 14px;
+      cursor:pointer;
       color: var(--muted);
-      font-size: 12px;
-      padding: 0;
+      user-select:none;
+      padding: 8px 6px;
+      border:1px solid transparent;
+    }
+    .nav .btnNav.active{
+      color: var(--text);
+      border-color: rgba(87,166,255,.35);
+      background: rgba(87,166,255,.12);
+    }
+    .nav .btnNav .ico{font-size:18px}
+    .nav .btnNav .lbl{font-size:11px; font-weight:800; letter-spacing:.2px}
+    .nav .btnNav.sync{
+      flex: 0 0 120px;
+      background: rgba(255,255,255,.05);
+      border-color: rgba(255,255,255,.08);
     }
 
-    .nav button.active {
-      color: var(--accent);
-    }
-
-    /* sync modal */
-    .sync-status {
+    /* sync toast/modal */
+    .toast{
       position: fixed;
-      bottom: 80px;
-      left: 16px;
-      right: 16px;
-      background: var(--card);
-      padding: 12px;
-      border-radius: 10px;
-      display: none;
-      z-index: 20;
+      left: 12px; right: 12px;
+      bottom: calc(var(--navH) + 20px + var(--safeB));
+      max-width: 1100px;
+      margin: 0 auto;
+      background: rgba(23,26,34,.92);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      display:none;
+      z-index: 60;
     }
+    .toast.show{display:block}
+    .toastTop{display:flex; justify-content:space-between; align-items:center; gap:10px}
+    .toastTitle{font-weight:900}
+    .toastBody{margin-top:8px; color: var(--muted); font-size:12px; line-height:1.35; white-space:pre-wrap}
+    .x{
+      width:32px; height:32px;
+      display:inline-flex; align-items:center; justify-content:center;
+      border-radius: 10px;
+      cursor:pointer;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+      user-select:none;
+    }
+
+    canvas{width:100%; height:260px; display:block}
+    .canvasWrap{height:260px}
+    @media (max-width: 420px){
+      canvas{height:240px}
+      .canvasWrap{height:240px}
+      .nav .btnNav.sync{flex:0 0 95px}
+    }
+
+    /* modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none; align-items:flex-end; justify-content:center;
+      z-index: 80;
+      padding: 14px;
+      padding-bottom: calc(14px + var(--safeB));
+    }
+    .modalBack.show{display:flex}
+    .modal{
+      width:100%; max-width: 640px;
+      background: rgba(23,26,34,.98);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .modalHead{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding: 12px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .modalHead h3{margin:0; font-size:15px}
+    .modalBody{padding: 12px 12px}
   </style>
 </head>
 
 <body>
+  <div class="wrap">
+    <!-- PULT -->
+    <section id="page-pult" class="page active">
+      <div class="grid cols2">
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Новая операция</h2>
+            <span class="pill" id="pill-month"></span>
+          </div>
 
-<!-- ПУЛЬТ -->
-<section id="pult" class="page active">
-  <div class="card">
-    <h2>Новая операция</h2>
-    <select id="type">
-      <option value="income">Доход</option>
-      <option value="expense">Расход</option>
-      <option value="transfer">Перевод</option>
-    </select>
-    <input id="amount" type="number" placeholder="Сумма" />
-    <select id="category"></select>
-    <input id="date" type="date" />
-    <input id="comment" placeholder="Комментарий" />
-    <button onclick="addOperation()">Добавить операцию</button>
+          <div class="row">
+            <div class="field">
+              <label>Тип</label>
+              <select id="op-type">
+                <option value="expense">Расход</option>
+                <option value="income">Доход</option>
+                <option value="transfer">Перевод</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>Сумма</label>
+              <input id="op-amount" type="number" inputmode="decimal" placeholder="0" />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Категория</label>
+              <select id="op-category"></select>
+            </div>
+            <div class="field">
+              <label>Счёт</label>
+              <select id="op-account"></select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label>Дата</label>
+              <input id="op-date" type="date" />
+            </div>
+            <div class="field">
+              <label>Комментарий</label>
+              <input id="op-comment" type="text" placeholder="необязательно" />
+            </div>
+          </div>
+
+          <button class="btn" id="btn-add-op">Добавить операцию</button>
+          <div class="hint" style="margin-top:8px">
+            Удаление операции — через крестик в списке ниже (с подтверждением).
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Лимиты (месяц)</h2>
+            <span class="pill" id="pill-limits"></span>
+          </div>
+          <div id="limits-view" class="list"></div>
+          <div class="hint" style="margin-top:10px">
+            Лимиты хранятся в Google Таблице, но настраиваются в разделе «Настройки».
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">
+          <h2>Операции</h2>
+          <div class="row" style="flex:0 0 auto; gap:8px">
+            <button class="btn inline small ghost" id="btn-refresh">Обновить</button>
+          </div>
+        </div>
+        <div id="ops-view"></div>
+      </div>
+
+      <div class="card">
+        <div class="cardTitle">
+          <h2>План накоплений на ключевые события</h2>
+          <span class="pill">по целям</span>
+        </div>
+        <div id="saving-plan" class="list"></div>
+      </div>
+    </section>
+
+    <!-- DASHBOARD -->
+    <section id="page-dashboard" class="page">
+      <div class="card">
+        <div class="cardTitle">
+          <h2>Аналитика</h2>
+          <span class="pill" id="pill-period"></span>
+        </div>
+
+        <div class="tabs" id="period-tabs">
+          <div class="tab active" data-period="week">Неделя</div>
+          <div class="tab" data-period="month">Месяц</div>
+          <div class="tab" data-period="year">Год</div>
+          <div class="tab" data-period="custom">Период</div>
+        </div>
+
+        <div id="custom-range" style="display:none; margin-top:10px" class="row">
+          <div class="field">
+            <label>С</label>
+            <input id="range-from" type="date" />
+          </div>
+          <div class="field">
+            <label>По</label>
+            <input id="range-to" type="date" />
+          </div>
+          <div class="field" style="align-self:flex-end">
+            <button class="btn secondary" id="btn-apply-range">Применить</button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="grid cols3" id="kpi-row"></div>
+      </div>
+
+      <div class="grid cols2">
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Динамика (доходы/расходы/баланс)</h2>
+            <span class="pill">столбцы</span>
+          </div>
+          <div class="canvasWrap"><canvas id="bar-chart"></canvas></div>
+          <div class="hint">Сравнение — текущий период vs предыдущий аналогичный.</div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Структура по категориям</h2>
+            <span class="pill">круг</span>
+          </div>
+          <div class="row">
+            <div style="flex:1 1 300px">
+              <div class="sectionTitle">Расходы</div>
+              <div class="canvasWrap"><canvas id="pie-expense"></canvas></div>
+            </div>
+            <div style="flex:1 1 300px">
+              <div class="sectionTitle">Доходы</div>
+              <div class="canvasWrap"><canvas id="pie-income"></canvas></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid cols2">
+        <div class="card">
+          <div class="cardTitle">
+            <h2>ТОП категорий расходов</h2>
+            <span class="pill">Top-5</span>
+          </div>
+          <div id="top-expense" class="list"></div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle">
+            <h2>ТОП категорий доходов</h2>
+            <span class="pill">Top-5</span>
+          </div>
+          <div id="top-income" class="list"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GOALS -->
+    <section id="page-goals" class="page">
+      <div class="grid cols2">
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Цели</h2>
+            <button class="btn inline small" id="btn-new-goal">+ Цель</button>
+          </div>
+          <div id="goals-list" class="list"></div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Мотивационная шкала (доход)</h2>
+            <span class="pill">столбчатая</span>
+          </div>
+          <div class="hint" style="margin-bottom:8px">
+            Внизу: «Стабильность — 150 000 ₽». Наверху: цель 2026 года. Этапы настраиваются в «Настройки».
+          </div>
+          <div class="canvasWrap"><canvas id="motivation-bar"></canvas></div>
+          <div class="hr"></div>
+          <div class="row">
+            <div class="kpi">
+              <div class="sub">Текущий среднемесячный доход</div>
+              <div class="val" id="mot-cur">—</div>
+            </div>
+            <div class="kpi">
+              <div class="sub">Следующий этап</div>
+              <div class="val" id="mot-next">—</div>
+            </div>
+            <div class="kpi">
+              <div class="sub">Нужно прибавить</div>
+              <div class="val" id="mot-gap">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="page-settings" class="page">
+      <div class="grid cols2">
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Категории</h2>
+            <button class="btn inline small" id="btn-new-cat">+ Категория</button>
+          </div>
+          <div id="cats-list" class="list"></div>
+          <div class="hint" style="margin-top:10px">
+            Список категорий хранится в Google Таблице, но управляется отсюда.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Лимиты</h2>
+            <button class="btn inline small" id="btn-new-limit">+ Лимит</button>
+          </div>
+          <div id="limits-settings" class="list"></div>
+          <div class="hint" style="margin-top:10px">
+            Лимиты сохраняются в Google Таблице, редактирование — через сайт.
+          </div>
+        </div>
+      </div>
+
+      <div class="grid cols2">
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Мотивационная шкала: этапы</h2>
+            <button class="btn inline small" id="btn-new-stage">+ Этап</button>
+          </div>
+          <div id="stages-list" class="list"></div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Мотивации (цитаты)</h2>
+            <button class="btn inline small" id="btn-new-quote">+ Цитата</button>
+          </div>
+          <div class="hint" style="margin-bottom:10px">
+            В приложении показывается «цитата дня». Можно добавлять свои и удалять.
+          </div>
+          <div id="quotes-list" class="list"></div>
+        </div>
+      </div>
+    </section>
   </div>
 
-  <div class="card">
-    <h2>Операции</h2>
-    <div id="operations"></div>
+  <!-- bottom nav -->
+  <div class="nav" role="navigation" aria-label="Навигация">
+    <div class="btnNav active" data-page="pult">
+      <div class="ico">🧮</div><div class="lbl">Пульт</div>
+    </div>
+    <div class="btnNav" data-page="dashboard">
+      <div class="ico">📊</div><div class="lbl">Дашборд</div>
+    </div>
+    <div class="btnNav" data-page="goals">
+      <div class="ico">🎯</div><div class="lbl">Цели</div>
+    </div>
+    <div class="btnNav" data-page="settings">
+      <div class="ico">⚙️</div><div class="lbl">Настройки</div>
+    </div>
+    <div class="btnNav sync" id="btn-sync">
+      <div class="ico">🔄</div><div class="lbl">Синхр.</div>
+    </div>
   </div>
 
-  <div class="card">
-    <h2>Лимиты</h2>
-    <div id="limits"></div>
+  <!-- toast -->
+  <div class="toast" id="toast">
+    <div class="toastTop">
+      <div class="toastTitle" id="toastTitle">Статус</div>
+      <div class="x" id="toastClose">✕</div>
+    </div>
+    <div class="toastBody" id="toastBody"></div>
   </div>
 
-  <div class="card">
-    <h2>План накоплений</h2>
-    <div id="savingPlan"></div>
+  <!-- modal -->
+  <div class="modalBack" id="modalBack">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="modalHead">
+        <h3 id="modalTitle">Модалка</h3>
+        <div class="x" id="modalClose">✕</div>
+      </div>
+      <div class="modalBody" id="modalBody"></div>
+    </div>
   </div>
-</section>
-
-<!-- ДАШБОРД -->
-<section id="dashboard" class="page">
-  <div class="card">
-    <h2>Сводка</h2>
-    <div id="summary"></div>
-  </div>
-
-  <div class="card">
-    <h2>Диаграммы</h2>
-    <p class="muted">Столбчатые и круговые диаграммы</p>
-  </div>
-
-  <div class="card">
-    <h2>ТОП категории</h2>
-    <div id="topCategories"></div>
-  </div>
-</section>
-
-<!-- ЦЕЛИ -->
-<section id="goals" class="page">
-  <div class="card">
-    <h2>Цели</h2>
-    <div id="goalsList"></div>
-  </div>
-
-  <div class="card">
-    <h2>Мотивационная шкала</h2>
-    <div id="motivationScale"></div>
-  </div>
-</section>
-
-<!-- НАСТРОЙКИ -->
-<section id="settings" class="page">
-  <div class="card">
-    <h2>Категории</h2>
-    <div id="categoriesSettings"></div>
-  </div>
-
-  <div class="card">
-    <h2>Лимиты</h2>
-    <div id="limitsSettings"></div>
-  </div>
-
-  <div class="card">
-    <h2>Мотивация</h2>
-    <div id="motivationSettings"></div>
-  </div>
-</section>
-
-<!-- SYNC STATUS -->
-<div id="syncStatus" class="sync-status"></div>
-
-<!-- NAV -->
-<nav class="nav">
-  <button onclick="showPage('pult')" class="active">🧮<br>Пульт</button>
-  <button onclick="showPage('dashboard')">📊<br>Дашборд</button>
-  <button onclick="showPage('goals')">🎯<br>Цели</button>
-  <button onclick="showPage('settings')">⚙️<br>Настройки</button>
-  <button onclick="sync()">🔄<br>Sync</button>
-</nav>
 
 <script>
-const API = "PASTE_YOUR_GAS_WEBAPP_URL";
+/**
+ * ============================
+ *  CONFIG
+ * ============================
+ * 1) Разверни Google Apps Script как Web App (/exec)
+ * 2) Вставь URL сюда
+ * 3) (опционально) включи API_KEY если ты его проверяешь в GAS
+ *
+ * ОЖИДАЕМЫЙ BOOTSTRAP:
+ * GET  ?action=bootstrap&key=...
+ * -> { ok:true, data:{ categories, accounts, limits, operations, goals, stages, quotes } }
+ *
+ * ОЖИДАЕМЫЕ ACTIONS (POST JSON):
+ * { key, action:"addOperation"|"deleteOperation"|... , data:{...} }
+ */
+const API_URL = "PASTE_YOUR_GAS_WEBAPP_URL_HERE";   // например: https://script.google.com/macros/s/XXXX/exec
+const API_KEY = ""; // если используешь ключ в GAS — вставь сюда
 
-function showPage(id) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
+/**
+ * ============================
+ *  STATE
+ * ============================
+ */
+const state = {
+  categories: [],     // {id,name,type} type: income|expense|transfer(optional)
+  accounts: [],       // {id,name}
+  limits: [],         // {id, categoryId, month, amount} month: YYYY-MM
+  operations: [],     // {id, createdAt, date, type, amount, categoryId, accountId, comment}
+  goals: [],          // {id, name, target, saved, deadline, accountId}
+  stages: [],         // {id, name, amount} amount: monthly income threshold
+  quotes: [],         // {id, text, author}
+  period: { kind:"week", from:null, to:null },
+  lastBootstrapAt: null
+};
 
-  document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
+/**
+ * ============================
+ *  UTIL
+ * ============================
+ */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const ruMoney = (n) => {
+  const v = Number(n || 0);
+  return v.toLocaleString("ru-RU") + " ₽";
+};
+const isoDate = (d) => {
+  const x = new Date(d);
+  const yyyy = x.getFullYear();
+  const mm = String(x.getMonth()+1).padStart(2,"0");
+  const dd = String(x.getDate()).padStart(2,"0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+const yyyymm = (d) => {
+  const x = new Date(d);
+  const yyyy = x.getFullYear();
+  const mm = String(x.getMonth()+1).padStart(2,"0");
+  return `${yyyy}-${mm}`;
+};
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+function today() {
+  const d = new Date();
+  d.setHours(0,0,0,0);
+  return d;
+}
+function startOfWeek(d){
+  const x = new Date(d);
+  const day = (x.getDay()+6)%7; // Mon=0
+  x.setDate(x.getDate()-day);
+  x.setHours(0,0,0,0);
+  return x;
+}
+function endOfWeek(d){
+  const s = startOfWeek(d);
+  const e = new Date(s);
+  e.setDate(e.getDate()+6);
+  e.setHours(23,59,59,999);
+  return e;
+}
+function startOfMonth(d){
+  const x = new Date(d);
+  x.setDate(1); x.setHours(0,0,0,0);
+  return x;
+}
+function endOfMonth(d){
+  const s = startOfMonth(d);
+  const e = new Date(s);
+  e.setMonth(e.getMonth()+1);
+  e.setDate(0);
+  e.setHours(23,59,59,999);
+  return e;
+}
+function startOfYear(d){
+  const x = new Date(d);
+  x.setMonth(0,1); x.setHours(0,0,0,0);
+  return x;
+}
+function endOfYear(d){
+  const s = startOfYear(d);
+  const e = new Date(s);
+  e.setFullYear(e.getFullYear()+1);
+  e.setDate(0);
+  e.setHours(23,59,59,999);
+  return e;
+}
+function daysBetween(a,b){
+  const ms = 24*3600*1000;
+  const x = new Date(a); x.setHours(0,0,0,0);
+  const y = new Date(b); y.setHours(0,0,0,0);
+  return Math.round((y-x)/ms);
+}
+function sum(arr){ return arr.reduce((s,x)=>s+Number(x||0),0); }
+
+function catById(id){ return state.categories.find(c=>String(c.id)===String(id)); }
+function accById(id){ return state.accounts.find(a=>String(a.id)===String(id)); }
+
+function toast(title, body, type="info", autoHideMs=2500){
+  const t = $("#toast");
+  $("#toastTitle").textContent = title;
+  $("#toastBody").textContent = body || "";
+  t.classList.add("show");
+  if (autoHideMs){
+    window.clearTimeout(toast._tm);
+    toast._tm = window.setTimeout(()=>t.classList.remove("show"), autoHideMs);
+  }
+}
+$("#toastClose").addEventListener("click", ()=>$("#toast").classList.remove("show"));
+
+function openModal(title, html){
+  $("#modalTitle").textContent = title;
+  $("#modalBody").innerHTML = html;
+  $("#modalBack").classList.add("show");
+}
+function closeModal(){ $("#modalBack").classList.remove("show"); }
+$("#modalClose").addEventListener("click", closeModal);
+$("#modalBack").addEventListener("click", (e)=>{ if(e.target.id==="modalBack") closeModal(); });
+
+async function apiGet(params){
+  const url = new URL(API_URL);
+  Object.entries(params).forEach(([k,v])=> url.searchParams.set(k, v));
+  if (API_KEY) url.searchParams.set("key", API_KEY);
+  const r = await fetch(url.toString(), { method:"GET" });
+  const j = await r.json().catch(()=>({ok:false, error:"Invalid JSON"}));
+  if (!r.ok || j.ok===false) throw new Error(j.error || `HTTP ${r.status}`);
+  return j;
+}
+async function apiPost(action, data){
+  const payload = { action, data };
+  if (API_KEY) payload.key = API_KEY;
+  const r = await fetch(API_URL, {
+    method:"POST",
+    headers: { "Content-Type":"text/plain;charset=utf-8" }, // GAS-friendly
+    body: JSON.stringify(payload)
+  });
+  const j = await r.json().catch(()=>({ok:false, error:"Invalid JSON"}));
+  if (!r.ok || j.ok===false) throw new Error(j.error || `HTTP ${r.status}`);
+  return j;
 }
 
-function sync() {
-  const box = document.getElementById('syncStatus');
-  box.style.display = 'block';
-  box.innerText = 'Синхронизация...';
+/**
+ * ============================
+ *  NAV
+ * ============================
+ */
+function showPage(name){
+  $$(".page").forEach(p=>p.classList.remove("active"));
+  $("#page-"+name).classList.add("active");
+  $$(".btnNav").forEach(b=>b.classList.remove("active"));
+  $(`.btnNav[data-page="${name}"]`)?.classList.add("active");
 
-  fetch(API + '?action=sync')
-    .then(r => r.json())
-    .then(() => {
-      box.innerText = 'Синхронизация завершена';
-      setTimeout(() => box.style.display = 'none', 2000);
-    });
+  // lazy rerender
+  if (name==="dashboard") renderDashboard();
+  if (name==="goals") renderGoals();
+  if (name==="settings") renderSettings();
+}
+$$(".btnNav").forEach(btn=>{
+  const p = btn.getAttribute("data-page");
+  if (!p) return;
+  btn.addEventListener("click", ()=>showPage(p));
+});
+$("#btn-sync").addEventListener("click", ()=>syncAll("manual"));
+
+/**
+ * ============================
+ *  BOOTSTRAP / SYNC
+ * ============================
+ */
+async function syncAll(reason="auto"){
+  toast("Синхронизация", "Запрашиваю данные…", "info", 0);
+  try{
+    const j = await apiGet({ action:"bootstrap" });
+    const d = (j.data || {});
+    state.categories = Array.isArray(d.categories) ? d.categories : [];
+    state.accounts   = Array.isArray(d.accounts) ? d.accounts : defaultAccounts();
+    state.limits     = Array.isArray(d.limits) ? d.limits : [];
+    state.operations = Array.isArray(d.operations) ? d.operations : [];
+    state.goals      = Array.isArray(d.goals) ? d.goals : [];
+    state.stages     = Array.isArray(d.stages) ? d.stages : defaultStages();
+    state.quotes     = Array.isArray(d.quotes) ? d.quotes : defaultQuotes();
+    state.lastBootstrapAt = new Date();
+
+    normalizeState();
+    toast("Синхронизация", "Готово ✅", "ok", 1800);
+
+    renderAll();
+  }catch(err){
+    toast("Ошибка синхронизации", String(err.message || err), "error", 0);
+  }
 }
 
-function addOperation() {
-  const data = {
-    type: type.value,
-    amount: amount.value,
-    category: category.value,
-    date: date.value,
-    comment: comment.value
-  };
-
-  fetch(API, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'addOperation', data })
-  }).then(() => sync());
+function defaultAccounts(){
+  return [
+    {id:"main", name:"Основной"},
+    {id:"card", name:"Карта"},
+    {id:"cash", name:"Наличные"}
+  ];
 }
-</script>
-</body>
-</html>
+function defaultStages(){
+  return [
+    {id:"st1", name:"Стабильность", amount:150000},
+    {id:"st2", name:"Комфорт", amount:220000},
+    {id:"st3", name:"Рост", amount:300000},
+    {id:"st4", name:"Свобода", amount:450000},
+    {id:"st5", name:"Цель 2026", amount:600000}
+  ];
+}
+function defaultQuotes(){
+  return [
+    {id:"q1", text:"Дисциплина — это мост между целями и достижениями.", author:"Джим Рон"},
+    {id:"q2", text:"Сначала мы формируем привычки, затем привычки формируют нас.", author:"Джон Драйден"},
+    {id:"q3", text:"Планы — ничто, планирование — всё.", author:"Дуайт Эйзенхауэр"},
+    {id:"q4", text:"Успех — сумма небольших усилий, повторяемых ежедневно.", author:"Роберт Кольер"}
+  ];
+}
+
+function normalizeState(){
+  // ensure ids exist
+  state.categories.forEach((c,i)=>{ if(!c.id) c.id = "cat_"+i; if(!c.type) c.type="expense"; });
+  state.accounts.forEach((a,i)=>{ if(!a.id) a.id = "acc_"+i; if(!a.name) a.name = "Счёт "+(i+1); });
+  state.operations.forEach((o,i)=>{ if(!o.id) o.id = "op_"+i; });
+  state.goals.forEach((g,i)=>{ if(!g.id) g.id = "g_"+i; });
+  state.stages.forEach((s,i)=>{ if(!s.id) s.id = "st_"+i; });
+  state.quotes.forEach((q,i)=>{ if(!q.id) q.id = "q_"+i; });
+
+  // sort stages asc by amount
+  state.stages.sort((a,b)=>Number(a.amount)-Number(b.amount));
+
+  // fill today date
+  const d = isoDate(today());
+  $("#op-date").value = $("#op-date").value || d;
+
+  // pill month
+  $("#pill-month").textContent = new Date().toLocaleString("ru-RU", {month:"long", year:"numeric"});
+}
+
+/**
+ * ============================
+ *  RENDER: COMMON
+ * ============================
+ */
+function renderAll(){
+  renderSelects();
+  renderPult();
+  if ($("#page-dashboard").classList.contains("active")) renderDashboard();
+  if ($("#page-goals").classList.contains("active")) renderGoals();
+  if ($("#page-settings").classList.contains("active")) renderSettings();
+}
+
+function renderSelects(){
+  // category select for new op: depends on type (income/expense/transfer)
+  const type = $("#op-type").value;
+  const cats = state.categories.filter(c => (c.type===type) || (type==="transfer" && c.type==="transfer"));
+  const catSel = $("#op-category");
+  catSel.innerHTML = cats.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("") || `<option value="">— нет категорий —</option>`;
+
+  // accounts
+  const accSel = $("#op-account");
+  accSel.innerHTML = state.accounts.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}</option>`).join("");
+  if (!accSel.value) accSel.value = state.accounts[0]?.id || "";
+}
+
+$("#op-type").addEventListener("change", renderSelects);
+
+/**
+ * ============================
+ *  PULT
+ * ============================
+ */
+function renderPult(){
+  renderOperations();
+  renderLimitsView();
+  renderSavingPlan();
+}
+
+function getMonthOps(monthYYYYMM){
+  return state.operations.filter(o => yyyymm(o.date || o.createdAt || new Date()) === monthYYYYMM);
+}
+
+function renderLimitsView(){
+  const month = yyyymm(new Date());
+  const monthOps = getMonthOps(month).filter(o=>o.type==="expense");
+  const spentByCat = {};
+  for (const o of monthOps){
+    const k = String(o.categoryId||"");
+    spentByCat[k] = (spentByCat[k]||0) + Number(o.amount||0);
+  }
+
+  const monthLimits = state.limits.filter(l => String(l.month)===String(month));
+  const limitsMap = {};
+  monthLimits.forEach(l=>limitsMap[String(l.categoryId)] = l);
+
+  // show only expense categories
+  const expCats = state.categories.filter(c=>c.type==="expense");
+
+  const rows = expCats.map(cat=>{
+    const lim = limitsMap[String(cat.id)];
+    const limitAmount = lim ? Number(lim.amount||0) : 0;
+    const spent = Number(spentByCat[String(cat.id)]||0);
+    const remaining = limitAmount > 0 ? (limitAmount - spent) : null;
+    const pct = (limitAmount>0) ? clamp((spent/limitAmount)*100, 0, 160) : 0;
+
+    const barColor = (limitAmount===0) ? "rgba(255,255,255,.25)" : (spent>limitAmount ? "rgba(255,91,110,.85)" : "rgba(87,166,255,.85)");
+    const status = (limitAmount===0) ? "Лимит не задан" : (spent>limitAmount ? "Превышение" : "Остаток");
+
+    return `
+      <div class="item">
+        <div class="left">
+          <div class="t">${esc(cat.name)}</div>
+          <div class="d">${esc(status)} · ${limitAmount===0 ? "" : `${ruMoney(spent)} / ${ruMoney(limitAmount)}`}</div>
+          <div class="progress" aria-label="progress">
+            <i style="width:${pct}%; background:${barColor}"></i>
+          </div>
+        </div>
+        <div class="right" style="flex-direction:column; align-items:flex-end">
+          <div style="font-weight:900">${limitAmount===0 ? "—" : (remaining>=0 ? ruMoney(remaining) : "−"+ruMoney(Math.abs(remaining)))}</div>
+          <button class="btn inline small ghost" onclick="openLimitForCategory('${esc(cat.id)}')">Настроить</button>
+        </div>
+      </div>
+    `;
+  });
+
+  $("#limits-view").innerHTML = rows.join("") || `<div class="muted">Нет категорий расходов.</div>`;
+
+  // summary pill
+  const totalLimit = sum(monthLimits.map(l=>Number(l.amount||0)));
+  const totalSpent = sum(Object.values(spentByCat));
+  const left = totalLimit>0 ? (totalLimit-totalSpent) : null;
+  $("#pill-limits").textContent = totalLimit>0
+    ? `Остаток: ${left>=0 ? ruMoney(left) : "−"+ruMoney(Math.abs(left))}`
+    : "Лимиты не заданы";
+}
+
+function renderOperations(){
+  const ops = [...state.operations].sort((a,b)=>new Date(b.date||b.createdAt)-new Date(a.date||a.createdAt));
+  if (!ops.length){
+    $("#ops-view").innerHTML = `<div class="muted">Пока нет операций. Добавь первую сверху.</div>`;
+    return;
+  }
+  // group by date
+  const groups = {};
+  for (const o of ops){
+    const d = isoDate(o.date || o.createdAt || new Date());
+    (groups[d] ||= []).push(o);
+  }
+  const dates = Object.keys(groups).sort((a,b)=> (a<b?1:-1));
+  const html = dates.map(d=>{
+    const items = groups[d].map(o=>{
+      const cat = catById(o.categoryId);
+      const acc = accById(o.accountId);
+      const tagCls = o.type;
+      const sign = o.type==="expense" ? "−" : (o.type==="income" ? "+" : "↔");
+      const amt = ruMoney(Math.abs(Number(o.amount||0)));
+      const note = (o.comment||"").trim();
+      return `
+        <div class="item">
+          <div class="left">
+            <div class="t">
+              <span class="tag ${tagCls}">${o.type==="expense"?"Расход":o.type==="income"?"Доход":"Перевод"}</span>
+              <span style="margin-left:6px">${esc(cat?.name || "Без категории")}</span>
+            </div>
+            <div class="d">${esc(acc?.name || "Счёт")} · ${note ? esc(note) : "—"}</div>
+          </div>
+          <div class="right">
+            <div style="font-weight:950">${sign} ${amt}</div>
+            <button class="btn inline small danger" onclick="confirmDeleteOp('${esc(o.id)}')">✕</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    const pretty = new Date(d+"T00:00:00").toLocaleDateString("ru-RU", {weekday:"short", day:"2-digit", month:"long"});
+    return `
+      <div style="margin: 14px 0 8px; color: var(--muted); font-weight:900; font-size:12px">${esc(pretty)}</div>
+      <div class="list">${items}</div>
+    `;
+  }).join("");
+
+  $("#ops-view").innerHTML = html;
+}
+
+function renderSavingPlan(){
+  const todayD = today();
+  if (!state.goals.length){
+    $("#saving-plan").innerHTML = `<div class="muted">Цели не заданы. Добавь их в разделе «Цели».</div>`;
+    return;
+  }
+
+  const html = state.goals.map(g=>{
+    const target = Number(g.target||0);
+    const saved = Number(g.saved||0);
+    const left = Math.max(0, target - saved);
+    const deadline = g.deadline ? new Date(g.deadline) : null;
+    const daysLeft = deadline ? Math.max(0, daysBetween(todayD, deadline)) : null;
+    const perDay = (daysLeft && daysLeft>0) ? (left/daysLeft) : null;
+    const perMonth = (daysLeft && daysLeft>0) ? (left / Math.max(1, Math.ceil(daysLeft/30))) : null;
+    const pct = target>0 ? clamp((saved/target)*100, 0, 100) : 0;
+
+    return `
+      <div class="item">
+        <div class="left">
+          <div class="t">${esc(g.name||"Цель")}</div>
+          <div class="d">${ruMoney(saved)} / ${ruMoney(target)} · ${deadline ? ("Дедлайн: "+deadline.toLocaleDateString("ru-RU")) : "Без дедлайна"}</div>
+          <div class="progress"><i style="width:${pct}%; background: rgba(65,211,141,.85)"></i></div>
+          <div class="d">
+            ${left===0 ? "Цель закрыта ✅" :
+              `Рекомендация: ${perDay ? (ruMoney(perDay.toFixed(0))+" / день") : (perMonth ? (ruMoney(perMonth.toFixed(0))+" / мес") : "задай дедлайн для расчёта")}`
+            }
+          </div>
+        </div>
+        <div class="right" style="flex-direction:column; align-items:flex-end">
+          <div style="font-weight:900">${left===0 ? "0 ₽" : ruMoney(left)}</div>
+          <button class="btn inline small ghost" onclick="openGoalEdit('${esc(g.id)}')">Изм.</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  $("#saving-plan").innerHTML = html;
+}
+
+/**
+ * Add / Delete operations
+ */
+$("#btn-add-op").addEventListener("click", async ()=>{
+  const type = $("#op-type").value;
+  const amount = Number($("#op-amount").value);
+  const categoryId = $("#op-category").value;
+  const accountId = $("#op-account").value;
+  const date = $("#op-date").value;
+  const comment = $("#op-comment").value || "";
+
+  if (!amount || amount<=0){
+    toast("Проверь сумму", "Сумма должна быть больше 0", "warn", 2000);
+    return;
+  }
+  if (!date){
+    toast("Проверь дату", "Выбери дату операции", "warn", 2000);
+    return;
+  }
+
+  try{
+    toast("Операция", "Сохраняю…", "info", 0);
+    await apiPost("addOperation", { type, amount, categoryId, accountId, date, comment });
+    $("#op-amount").value = "";
+    $("#op-comment").value = "";
+    await syncAll("afterAdd");
+  }catch(err){
+    toast("Ошибка", String(err.message || err), "error", 0);
+  }
+});
+
+function confirmDeleteOp(id){
+  const op = state.operations.find(o=>String(o.id)===String(id));
+  if (!op){ toast("Не найдено", "Операция не найдена", "error", 2000); return; }
+  const cat = catById(op.categoryId);
+  const sign = op.type==="expense" ? "−" : (op.type==="income" ? "+" : "↔");
+  const html = `
+    <div class="muted" style="margin-bottom:10px">
+      Удалить операцию?
+      <div style="margin-top:8px; color:var(--text); font-weight:900">
+        ${sign} ${ruMoney(op.amount)} · ${esc(cat?.name||"Без категории")} · ${esc(isoDate(op.date||op.createdAt))}
+      </div>
+    </div>
+    <div class="row">
+      <button class="btn danger" id="modalYes">Удалить</button>
+      <button class="btn secondary" id="modalNo">Отмена</button>
+    </div>
+  `;
+  openModal("Подтверждение", html);
+  $("#modalNo").addEventListener("click", closeModal, {once:true});
+  $("#modalYes").addEventListener("click", async ()=>{
+    try{
+      toast("Удаление", "Удаляю…", "info", 0);
+      await apiPost("deleteOperation", { id });
+      closeModal();
+      await syncAll("afterDelete");
+    }catch(err){
+      toast("Ошибка", String(err.message || err), "error", 0);
+    }
+  }, {once:true});
+}
+
+$("#btn-refresh").addEventListener("click", ()=>syncAll("refresh"));
+
+/**
+ * Jump to limit edit for category
+ */
+function openLimitForCategory(categoryId){
+  showPage("settings");
+  // scroll hint: open modal editor directly
+  const cat = catById(categoryId);
+  openLimitEditor({ id:null, categoryId, month: yyyymm(new Date()), amount: "" }, `Лимит: ${cat?.name||"Категория"}`);
+}
+
+/**
+ * ============================
+ *  DASHBOARD
+ * ============================
+ */
+function setPeriod(kind){
+  state.period.kind = kind;
+  if (kind!=="custom"){
+    const now = new Date();
+    if (kind==="week"){ state.period.from = startOfWeek(now); state.period.to = endOfWeek(now); }
+    if (kind==="month"){ state.period.from = startOfMonth(now); state.period.to = endOfMonth(now); }
+    if (kind==="year"){ state.period.from = startOfYear(now); state.period.to = endOfYear(now); }
+  }
+  $("#custom-range").style.display = (kind==="custom") ? "flex" : "none";
+  renderDashboard();
+}
+
+$("#period-tabs").addEventListener("click", (e)=>{
+  const tab = e.target.closest(".tab");
+  if (!tab) return;
+  $$("#period-tabs .tab").forEach(t=>t.classList.remove("active"));
+  tab.classList.add("active");
+  const kind = tab.getAttribute("data-period");
+  setPeriod(kind);
+});
+
+$("#btn-apply-range").addEventListener("click", ()=>{
+  const f = $("#range-from").value;
+  const t = $("#range-to").value;
+  if (!f || !t){ toast("Период", "Выбери обе даты", "warn", 2000); return; }
+  const from = new Date(f+"T00:00:00");
+  const to = new Date(t+"T23:59:59");
+  if (from>to){ toast("Период", "Дата «С» должна быть раньше «По»", "warn", 2200); return; }
+  state.period.from = from; state.period.to = to;
+  renderDashboard();
+});
+
+function opsInRange(from,to){
+  const a = new Date(from); const b = new Date(to);
+  return state.operations.filter(o=>{
+    const d = new Date((o.date||o.createdAt));
+    return d>=a && d<=b;
+  });
+}
+function previousAnalogRange(from,to){
+  const days = Math.max(1, daysBetween(from,to)+1);
+  const prevTo = new Date(from);
+  prevTo.setMilliseconds(prevTo.getMilliseconds()-1);
+  const prevFrom = new Date(prevTo);
+  prevFrom.setDate(prevFrom.getDate() - (days-1));
+  prevFrom.setHours(0,0,0,0);
+  return {from:prevFrom, to:prevTo};
+}
+
+function renderDashboard(){
+  // init default period if not set
+  if (!state.period.from || !state.period.to){
+    setPeriod(state.period.kind || "week");
+    return;
+  }
+  const from = state.period.from, to = state.period.to;
+  const pretty = `${from.toLocaleDateString("ru-RU")} — ${to.toLocaleDateString("ru-RU")}`;
+  $("#pill-period").textContent = pretty;
+
+  const curOps = opsInRange(from,to);
+  const prev = previousAnalogRange(from,to);
+  const prevOps = opsInRange(prev.from, prev.to);
+
+  const curIncome = sum(curOps.filter(o=>o.type==="income").map(o=>Number(o.amount||0)));
+  const curExpense = sum(curOps.filter(o=>o.type==="expense").map(o=>Number(o.amount||0)));
+  const curBalance = curIncome - curExpense;
+
+  const prevIncome = sum(prevOps.filter(o=>o.type==="income").map(o=>Number(o.amount||0)));
+  const prevExpense = sum(prevOps.filter(o=>o.type==="expense").map(o=>Number(o.amount||0)));
+  const prevBalance = prevIncome - prevExpense;
+
+  const kpis = [
+    { label:"Доходы", val:curIncome, prev:prevIncome },
+    { label:"Расходы", val:curExpense, prev:prevExpense },
+    { label:"Баланс",  val:curBalance, prev:prevBalance }
+  ];
+  $("#kpi-row").innerHTML = kpis.map(k=>{
+    const deltaPct = (k.prev===0) ? (k.val===0 ? 0 : 100) : ((k.val-k.prev)/Math.abs(k.prev))*100;
+    const cls = (k.val>k.prev) ? "up" : (k.val<k.prev) ? "down" : "flat";
+    const arrow = (cls==="up")?"↑":(cls==="down")?"↓":"→";
+    return `
+      <div class="kpi">
+        <div class="sub">${esc(k.label)} · <span class="delta ${cls}">${arrow} ${Math.round(deltaPct)}%</span></div>
+        <div class="val">${ruMoney(k.val)}</div>
+        <div class="sub">пред. период: ${ruMoney(k.prev)}</div>
+      </div>
+    `;
+  }).join("");
+
+  // charts
+  drawBarChart($("#bar-chart"), from,to, curOps);
+  drawPie($("#pie-expense"), curOps.filter(o=>o.type==="expense"), "expense");
+  drawPie($("#pie-income"), curOps.filter(o=>o.type==="income"), "income");
+
+  renderTopCategories(curOps);
+}
+
+function bucketLabel(d, kind){
+  const x = new Date(d);
+  if (kind==="year") return x.toLocaleString("ru-RU", {month:"short"});
+  if (kind==="month") return x.toLocaleDateString("ru-RU", {day:"2-digit", month:"short"});
+  if (kind==="week") return x.toLocaleDateString("ru-RU", {weekday:"short"});
+  // custom: day+month
+  return x.toLocaleDateString("ru-RU", {day:"2-digit", month:"short"});
+}
+
+function drawBarChart(canvas, from, to, ops){
+  const ctx = canvas.getContext("2d");
+  const DPR = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  canvas.width = Math.floor(w*DPR);
+  canvas.height = Math.floor(h*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+
+  ctx.clearRect(0,0,w,h);
+
+  // determine buckets count based on range
+  const days = Math.max(1, daysBetween(from,to)+1);
+  let bucket = "day";
+  if (state.period.kind==="year") bucket="month";
+  else if (days<=7) bucket="dow";
+  else bucket="day";
+
+  // build buckets
+  const buckets = [];
+  const map = new Map(); // label -> {income,expense}
+  const cur = new Date(from);
+  cur.setHours(0,0,0,0);
+
+  if (bucket==="month"){
+    const s = new Date(from); s.setDate(1);
+    const e = new Date(to);
+    let it = new Date(s);
+    while (it<=e){
+      const lab = it.toLocaleString("ru-RU", {month:"short"});
+      map.set(lab, {income:0, expense:0});
+      buckets.push({key: lab});
+      it.setMonth(it.getMonth()+1);
+    }
+    for (const o of ops){
+      const
