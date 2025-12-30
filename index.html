@@ -32,37 +32,19 @@
       color:var(--text);
     }
 
-    /* Layout */
-    .app{
-      min-height:100%;
-      padding-bottom: 92px; /* space for bottom bar */
-    }
-    .container{
-      width:min(1100px, 92vw);
-      margin: 22px auto 0;
-    }
+    .app{ min-height:100%; padding-bottom: 92px; }
+    .container{ width:min(1100px, 92vw); margin: 22px auto 0; }
 
-    /* Top title */
-    .top{
-      display:flex; align-items:flex-start; justify-content:space-between;
-      gap:16px; margin-bottom: 14px;
-    }
-    .brand{
-      display:flex; gap:12px; align-items:center;
-    }
+    .top{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom: 14px; }
+    .brand{ display:flex; gap:12px; align-items:center; }
     .logo{
       width:36px; height:36px; border-radius: 10px;
       background: linear-gradient(135deg, rgba(106,163,255,.95), rgba(122,70,255,.75));
       box-shadow: 0 12px 30px rgba(106,163,255,.22);
     }
-    .brand h1{
-      margin:0; font-size:16px; letter-spacing:.2px;
-    }
-    .brand .sub{
-      margin-top:2px; color:var(--muted); font-size:12px;
-    }
+    .brand h1{ margin:0; font-size:16px; letter-spacing:.2px; }
+    .brand .sub{ margin-top:2px; color:var(--muted); font-size:12px; }
 
-    /* Cards */
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border: 1px solid var(--stroke);
@@ -79,7 +61,6 @@
     .card .hd h2{margin:0; font-size:14px}
     .card .bd{ padding: 14px 16px; }
 
-    /* Buttons */
     .btn{
       appearance:none; border:none;
       padding:10px 12px;
@@ -107,7 +88,6 @@
     }
     .btn.small{ padding:7px 10px; border-radius: 12px; font-size:12px; }
 
-    /* Inputs */
     input, select, textarea{
       width:100%;
       padding:10px 12px;
@@ -127,14 +107,9 @@
       .container{ width:min(980px, 94vw); }
     }
 
-    /* Table */
     .tableWrap{ overflow:auto; border-radius: 16px; border:1px solid var(--stroke); }
     table{ width:100%; border-collapse: collapse; min-width: 740px; }
-    th, td{
-      padding: 12px 12px;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-      vertical-align: top;
-    }
+    th, td{ padding: 12px 12px; border-bottom: 1px solid rgba(255,255,255,.06); vertical-align: top; }
     th{ color: var(--muted); font-weight: 600; font-size: 12px; text-align:left; }
     td .muted{ color: var(--muted2); font-size: 12px; margin-top: 2px; }
     .pill{
@@ -146,12 +121,10 @@
     }
     .pill.income{ border-color: rgba(53,208,127,.28); background: rgba(53,208,127,.10); }
     .pill.expense{ border-color: rgba(255,90,122,.28); background: rgba(255,90,122,.10); }
-
     .amount{ font-variant-numeric: tabular-nums; white-space:nowrap; }
     .amount.income{ color: rgba(53,208,127,.95); }
     .amount.expense{ color: rgba(255,90,122,.95); }
 
-    /* Delete cross */
     .xbtn{
       width:30px; height:30px;
       border-radius: 10px;
@@ -164,7 +137,6 @@
     .xbtn:active{ transform: translateY(1px); }
     .xbtn svg{ opacity:.9; }
 
-    /* Mobile: table -> cards */
     .txCards{ display:none; gap:10px; }
     .txCard{
       border: 1px solid rgba(255,255,255,.10);
@@ -182,7 +154,6 @@
       .txCards{ display:grid; }
     }
 
-    /* Bottom bar */
     .bottomBar{
       position: fixed;
       left: 0; right: 0; bottom: 0;
@@ -224,10 +195,8 @@
       background: rgba(255,255,255,.08);
       border-color: rgba(255,255,255,.12);
     }
-    .navBtn svg{ opacity:.85; }
     .syncArea{ display:flex; gap:10px; align-items:center; }
 
-    /* Toast status */
     .toast{
       position: fixed;
       left: 50%;
@@ -243,16 +212,13 @@
       display:none;
     }
     .toast.show{ display:block; }
-    .toastTop{
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-    }
+    .toastTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
     .toastTitle{ font-weight:700; }
     .toastMsg{ color:var(--muted); margin-top:4px; font-size:12px; }
     .toast.ok{ border-color: rgba(53,208,127,.35); }
     .toast.bad{ border-color: rgba(255,90,122,.35); }
     .toast.warn{ border-color: rgba(255,204,102,.35); }
 
-    /* Dashboard blocks */
     .grid2{ display:grid; grid-template-columns: 1.1fr .9fr; gap:14px; }
     @media (max-width: 980px){ .grid2{ grid-template-columns: 1fr; } }
     .miniList{ display:grid; gap:10px; }
@@ -267,7 +233,6 @@
     .miniItem .val{ font-variant-numeric: tabular-nums; white-space:nowrap; }
     .miniItem .sub{ color:var(--muted2); font-size:12px; margin-top:2px; }
 
-    /* Goals page motivation bar chart */
     .motWrap{
       display:grid; gap:10px;
       padding: 10px 12px;
@@ -275,10 +240,7 @@
       border: 1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.04);
     }
-    .motChart{
-      display:grid;
-      gap:10px;
-    }
+    .motChart{ display:grid; gap:10px; }
     .motBar{
       height: 18px;
       border-radius: 999px;
@@ -287,15 +249,8 @@
       overflow:hidden;
       position:relative;
     }
-    .motFill{
-      height:100%;
-      width:0%;
-      background: linear-gradient(90deg, rgba(53,208,127,.45), rgba(106,163,255,.55));
-    }
-    .motLabels{
-      display:flex; justify-content:space-between; gap:10px;
-      font-size:12px; color:var(--muted);
-    }
+    .motFill{ height:100%; width:0%; background: linear-gradient(90deg, rgba(53,208,127,.45), rgba(106,163,255,.55)); }
+    .motLabels{ display:flex; justify-content:space-between; gap:10px; font-size:12px; color:var(--muted); }
     .hr{ height:1px; background: rgba(255,255,255,.08); margin: 10px 0; }
   </style>
 </head>
@@ -307,7 +262,7 @@
           <div class="logo"></div>
           <div>
             <h1>Finance OS</h1>
-            <div class="sub" id="subtitle">Пульт · Дашборд · Цели · Настройки</div>
+            <div class="sub">Пульт · Дашборд · Цели · Настройки</div>
           </div>
         </div>
       </div>
@@ -339,10 +294,8 @@
 
             <div style="height:12px"></div>
 
-            <!-- Mobile cards -->
             <div class="txCards" id="txCards"></div>
 
-            <!-- Desktop table -->
             <div class="tableWrap">
               <table>
                 <thead>
@@ -385,7 +338,7 @@
               <h2>Сводка</h2>
               <div class="pill" id="dashRangePill">Диапазон</div>
             </div>
-            <div class="bd" id="dashSummary">
+            <div class="bd">
               <div class="row cols3">
                 <div class="miniItem">
                   <div>
@@ -454,7 +407,7 @@
                 </div>
               </div>
               <div style="color:var(--muted); font-size:12px;">
-                Шкала считается по текущему среднему доходу/балансу за выбранный период (можно поменять формулу).
+                Шкала считается по балансу (доходы − расходы) за выбранный период (можно поменять формулу).
               </div>
             </div>
           </div>
@@ -541,18 +494,10 @@
   <div class="bottomBar">
     <div class="bottomInner">
       <div class="nav" role="tablist" aria-label="Навигация">
-        <button class="navBtn active" data-page="pult">
-          <span>Пульт</span>
-        </button>
-        <button class="navBtn" data-page="dash">
-          <span>Дашборд</span>
-        </button>
-        <button class="navBtn" data-page="goals">
-          <span>Цели</span>
-        </button>
-        <button class="navBtn" data-page="settings">
-          <span>Настройки</span>
-        </button>
+        <button class="navBtn active" data-page="pult"><span>Пульт</span></button>
+        <button class="navBtn" data-page="dash"><span>Дашборд</span></button>
+        <button class="navBtn" data-page="goals"><span>Цели</span></button>
+        <button class="navBtn" data-page="settings"><span>Настройки</span></button>
       </div>
       <div class="syncArea">
         <button class="btn primary" id="btnSync">Синхронизировать</button>
@@ -571,22 +516,28 @@
     </div>
   </div>
 
-  <!-- Add Transaction Modal (simple prompt-based, lightweight) -->
-
   <script>
     /***********************
      * CONFIG
      ***********************/
-    const API_URL = "https://YOUR_WORKER_URL_HERE"; // <-- поставь URL Cloudflare Worker
-    const API_KEY = ""; // можно оставить пустым, если ключ вставляется на воркере в env.API_KEY
+    // ВАЖНО: замени на URL твоего Cloudflare Worker, например:
+    // const API_URL = "https://finance-2026-proxy.<account>.workers.dev";
+    const API_URL = "https://YOUR_WORKER_URL_HERE";
+    const API_KEY = ""; // можно оставить пустым, если key вставляется на воркере через env.API_KEY
+
+    /***********************
+     * SAFETY / POLYFILLS
+     ***********************/
+    if (!window.CSS) window.CSS = {};
+    if (!CSS.escape) CSS.escape = (s)=>String(s).replace(/["\\]/g, "\\$&");
 
     /***********************
      * STATE
      ***********************/
     let ALL_TX = [];
     let GOALS = [];
-    let CATEGORIES = []; // [{type,income|expense, category, subcategory}]
-    let LIMITS = [];     // [{type,income|expense, category, limit, period}]
+    let CATEGORIES = [];
+    let LIMITS = [];
     let SETTINGS = {
       defaultFrom: "",
       defaultTo: "",
@@ -629,16 +580,29 @@
     function toastHide(){ $("toast").classList.remove("show"); }
 
     function parseDateISO(s){
-      // expects YYYY-MM-DD
       if (!s) return new Date(NaN);
       const [y,m,d] = String(s).slice(0,10).split("-").map(Number);
       return new Date(y, (m||1)-1, d||1);
+    }
+
+    function escapeHtml(s){
+      return String(s ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;");
+    }
+    function escapeAttr(s){
+      return String(s ?? "").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");
     }
 
     /***********************
      * API
      ***********************/
     async function apiGet(action, params = {}){
+      if (!API_URL || API_URL.includes("YOUR_WORKER_URL_HERE")) {
+        throw new Error("API_URL не задан. Вставь URL Cloudflare Worker в index.html");
+      }
       const url = new URL(API_URL);
       url.searchParams.set("action", action);
       if (API_KEY) url.searchParams.set("key", API_KEY);
@@ -651,6 +615,9 @@
     }
 
     async function apiPost(action, payload = {}){
+      if (!API_URL || API_URL.includes("YOUR_WORKER_URL_HERE")) {
+        throw new Error("API_URL не задан. Вставь URL Cloudflare Worker в index.html");
+      }
       const body = { action, ...payload };
       if (API_KEY) body.key = API_KEY;
 
@@ -668,11 +635,11 @@
      * LOCAL STORAGE
      ***********************/
     const LS = {
-      tx: "finance_tx_v3",
-      goals: "finance_goals_v3",
-      cats: "finance_cats_v3",
-      limits: "finance_limits_v3",
-      settings: "finance_settings_v3"
+      tx: "finance_tx_v4",
+      goals: "finance_goals_v4",
+      cats: "finance_cats_v4",
+      limits: "finance_limits_v4",
+      settings: "finance_settings_v4"
     };
 
     function loadLocal(){
@@ -703,6 +670,7 @@
       document.querySelectorAll(".navBtn").forEach(b=>{
         b.classList.toggle("active", b.dataset.page === page);
       });
+
       if (page==="dash") renderDashboard();
       if (page==="goals") renderGoals();
       if (page==="settings") renderSettingsEditors();
@@ -712,11 +680,7 @@
      * RENDER: TRANSACTIONS
      ***********************/
     function renderTransactions(){
-      // ensure _d for filtering
-      const tx = ALL_TX.map(x => ({
-        ...x,
-        _d: parseDateISO(x.date)
-      }));
+      const tx = ALL_TX.map(x => ({ ...x, _d: parseDateISO(x.date) }));
 
       const from = $("fromDate").value || SETTINGS.defaultFrom || monthStartISO();
       const to = $("toDate").value || SETTINGS.defaultTo || todayISO();
@@ -726,13 +690,11 @@
       const filtered = tx.filter(x => x._d >= f && x._d <= t)
         .sort((a,b)=> (a.date < b.date ? 1 : (a.date > b.date ? -1 : 0)));
 
-      // desktop table
       const tb = $("txTbody");
       tb.innerHTML = "";
       for (const x of filtered){
         const tr = document.createElement("tr");
         const typeRu = (x.type==="income") ? "Доход" : "Расход";
-
         tr.innerHTML = `
           <td>${x.date}</td>
           <td><span class="pill ${x.type}">${typeRu}</span></td>
@@ -743,7 +705,7 @@
           <td class="amount ${x.type}">${fmtMoney(x.amount)}</td>
           <td>${escapeHtml(x.note || "")}</td>
           <td>
-            <button class="xbtn" title="Удалить" data-id="${x.id}">
+            <button class="xbtn" title="Удалить" data-id="${escapeAttr(x.id)}">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -754,7 +716,6 @@
         tb.appendChild(tr);
       }
 
-      // mobile cards
       const cards = $("txCards");
       cards.innerHTML = "";
       for (const x of filtered){
@@ -769,7 +730,7 @@
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
               <div class="amount ${x.type}">${fmtMoney(x.amount)}</div>
-              <button class="xbtn" title="Удалить" data-id="${x.id}">
+              <button class="xbtn" title="Удалить" data-id="${escapeAttr(x.id)}">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                   <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                   <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
@@ -782,27 +743,16 @@
         cards.appendChild(el);
       }
 
-      // attach delete handlers
       document.querySelectorAll(".xbtn[data-id]").forEach(btn=>{
         btn.onclick = async ()=>{
           const id = btn.dataset.id;
           const item = ALL_TX.find(t=>t.id===id);
           if (!item) return;
-
           const ok = confirm(`Удалить операцию?\n\n${item.date} · ${item.category} · ${fmtMoney(item.amount)}`);
           if (!ok) return;
-
           await deleteTransaction(id);
         };
       });
-    }
-
-    function escapeHtml(s){
-      return String(s ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;");
     }
 
     /***********************
@@ -816,8 +766,7 @@
       const f = parseDateISO(from);
       const t = parseDateISO(to);
 
-      const tx = ALL_TX
-        .map(x=>({ ...x, _d: parseDateISO(x.date) }))
+      const tx = ALL_TX.map(x=>({ ...x, _d: parseDateISO(x.date) }))
         .filter(x=> x._d >= f && x._d <= t);
 
       const sumIncome = tx.filter(x=>x.type==="income").reduce((a,x)=>a+Number(x.amount||0),0);
@@ -829,7 +778,6 @@
       $("sumBalance").textContent = fmtMoney(balance);
       $("sumBalance").className = "val amount " + (balance>=0 ? "income" : "expense");
 
-      // TOP categories separated
       const topIncome = topByCategory(tx.filter(x=>x.type==="income"));
       const topExpense = topByCategory(tx.filter(x=>x.type==="expense"));
 
@@ -869,199 +817,168 @@
     }
 
     /***********************
-     * RENDER: GOALS + MOTIVATION
+     * GOALS CRUD (UI)
      ***********************/
-function renderGoals(){
-  const root = $("goalsList");
-  root.innerHTML = "";
+    function renderGoals(){
+      const root = $("goalsList");
+      root.innerHTML = "";
 
-  if (!GOALS.length){
-    root.innerHTML = `<div style="color:var(--muted); font-size:12px;">Целей пока нет. Нажми “Добавить цель”.</div>`;
-  } else {
-    const sorted = GOALS.slice().sort((a,b)=>String(a.priority||"").localeCompare(String(b.priority||"")));
-    for (const g of sorted){
-      const el = document.createElement("div");
-      el.className = "miniItem";
-      el.innerHTML = `
-        <div style="flex:1;">
-          <div class="row cols3">
-            <div>
-              <label>Название (уникальное)</label>
-              <input data-goal="${escapeAttr(g.name)}" data-field="name" value="${escapeAttr(g.name)}" />
+      if (!GOALS.length){
+        root.innerHTML = `<div style="color:var(--muted); font-size:12px;">Целей пока нет. Нажми “Добавить цель”.</div>`;
+      } else {
+        const sorted = GOALS.slice().sort((a,b)=>String(a.priority||"").localeCompare(String(b.priority||"")));
+        for (const g of sorted){
+          const el = document.createElement("div");
+          el.className = "miniItem";
+          el.innerHTML = `
+            <div style="flex:1;">
+              <div class="row cols3">
+                <div>
+                  <label>Название (уникальное)</label>
+                  <input data-goal="${escapeAttr(g.name)}" data-field="name" value="${escapeAttr(g.name)}" />
+                </div>
+                <div>
+                  <label>Сумма, ₽</label>
+                  <input type="number" data-goal="${escapeAttr(g.name)}" data-field="amount" value="${escapeAttr(g.amount||0)}" />
+                </div>
+                <div>
+                  <label>Накоплено, ₽</label>
+                  <input type="number" data-goal="${escapeAttr(g.name)}" data-field="saved" value="${escapeAttr(g.saved||0)}" />
+                </div>
+              </div>
+
+              <div style="height:8px"></div>
+
+              <div class="row cols3">
+                <div>
+                  <label>Срок (YYYY-MM-DD)</label>
+                  <input type="date" data-goal="${escapeAttr(g.name)}" data-field="due" value="${escapeAttr(g.due||"")}" />
+                </div>
+                <div>
+                  <label>Старт (опц.)</label>
+                  <input type="date" data-goal="${escapeAttr(g.name)}" data-field="start" value="${escapeAttr(g.start||"")}" />
+                </div>
+                <div>
+                  <label>Приоритет</label>
+                  <input data-goal="${escapeAttr(g.name)}" data-field="priority" value="${escapeAttr(g.priority||"")}" />
+                </div>
+              </div>
             </div>
-            <div>
-              <label>Сумма, ₽</label>
-              <input type="number" data-goal="${escapeAttr(g.name)}" data-field="amount" value="${escapeAttr(g.amount||0)}" />
+
+            <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
+              <button class="btn small primary" data-goal-save="${escapeAttr(g.name)}">Сохранить</button>
+              <button class="xbtn" title="Удалить" data-goal-del="${escapeAttr(g.name)}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                  <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
             </div>
-            <div>
-              <label>Накоплено, ₽</label>
-              <input type="number" data-goal="${escapeAttr(g.name)}" data-field="saved" value="${escapeAttr(g.saved||0)}" />
-            </div>
-          </div>
+          `;
+          root.appendChild(el);
+        }
 
-          <div style="height:8px"></div>
+        document.querySelectorAll("[data-goal-save]").forEach(btn=>{
+          btn.onclick = async ()=>{
+            const originalName = btn.dataset.goalSave;
+            const patch = collectGoalPatch(originalName);
+            await updateGoal(originalName, patch);
+          };
+        });
 
-          <div class="row cols3">
-            <div>
-              <label>Срок (YYYY-MM-DD)</label>
-              <input type="date" data-goal="${escapeAttr(g.name)}" data-field="due" value="${escapeAttr(g.due||"")}" />
-            </div>
-            <div>
-              <label>Старт (опц.)</label>
-              <input type="date" data-goal="${escapeAttr(g.name)}" data-field="start" value="${escapeAttr(g.start||"")}" />
-            </div>
-            <div>
-              <label>Приоритет</label>
-              <input data-goal="${escapeAttr(g.name)}" data-field="priority" value="${escapeAttr(g.priority||"")}" />
-            </div>
-          </div>
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end;">
-          <button class="btn small primary" data-goal-save="${escapeAttr(g.name)}">Сохранить</button>
-          <button class="xbtn" title="Удалить" data-goal-del="${escapeAttr(g.name)}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-              <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </button>
-        </div>
-      `;
-      root.appendChild(el);
-    }
-
-    // Save handlers
-    document.querySelectorAll("[data-goal-save]").forEach(btn=>{
-      btn.onclick = async ()=>{
-        const originalName = btn.dataset.goalSave;
-        const patch = collectGoalPatch(originalName);
-        await updateGoal(originalName, patch);
-      };
-    });
-
-    // Delete handlers
-    document.querySelectorAll("[data-goal-del]").forEach(btn=>{
-      btn.onclick = async ()=>{
-        const name = btn.dataset.goalDel;
-        const ok = confirm(`Удалить цель?\n\n${name}`);
-        if (!ok) return;
-        await deleteGoal(name);
-      };
-    });
-  }
-
-  renderMotivation(); // отдельно, чтобы было чисто
-}
-
-  function collectGoalPatch(originalName){
-  const patch = {};
-  const inputs = document.querySelectorAll(`[data-goal="${CSS.escape(originalName)}"]`);
-  inputs.forEach(inp=>{
-    const field = inp.dataset.field;
-    if (!field) return;
-    if (field === "amount" || field === "saved") patch[field] = Number(inp.value || 0);
-    else patch[field] = inp.value || "";
-  });
-  return patch;
-}
-
-async function updateGoal(originalName, patch){
-  toastShow("warn","Цели","Сохраняю изменения…");
-  try{
-    await apiPost("updateGoal", { originalName, patch });
-    await syncGoalsOnly();
-    toastShow("ok","Сохранено","Цель обновлена.");
-    setTimeout(toastHide, 1200);
-  }catch(err){
-    toastShow("bad","Ошибка", String(err.message || err));
-  }
-}
-
-async function deleteGoal(name){
-  toastShow("warn","Цели","Удаляю цель…");
-  try{
-    await apiPost("deleteGoal", { name });
-    await syncGoalsOnly();
-    toastShow("ok","Удалено","Цель удалена.");
-    setTimeout(toastHide, 1200);
-  }catch(err){
-    toastShow("bad","Ошибка", String(err.message || err));
-  }
-}
-
-async function addGoalPrompt(){
-  const name = prompt("Название цели (уникальное):", "Новая цель");
-  if (!name) return;
-
-  const amount = Number(prompt("Сумма цели (₽):", "100000") || 0);
-  if (!amount) return;
-
-  const due = prompt("Срок (YYYY-MM-DD, можно пусто):", "") || "";
-  const start = prompt("Старт (YYYY-MM-DD, можно пусто):", "") || "";
-  const saved = Number(prompt("Уже накоплено (₽):", "0") || 0);
-  const priority = prompt("Приоритет (например A/B/C):", "B") || "";
-
-  toastShow("warn","Цели","Добавляю цель…");
-  try{
-    await apiPost("addGoal", { name, amount, due, start, saved, priority });
-    await syncGoalsOnly();
-    toastShow("ok","Добавлено","Цель создана.");
-    setTimeout(toastHide, 1200);
-  }catch(err){
-    toastShow("bad","Ошибка", String(err.message || err));
-  }
-}
-
-function renderMotivation(){
-  const from = $("fromDate").value || SETTINGS.defaultFrom || monthStartISO();
-  const to = $("toDate").value || SETTINGS.defaultTo || todayISO();
-  const f = parseDateISO(from);
-  const t = parseDateISO(to);
-
-  const tx = ALL_TX.map(x=>({ ...x, _d: parseDateISO(x.date) })).filter(x=>x._d>=f && x._d<=t);
-  const sumIncome = tx.filter(x=>x.type==="income").reduce((a,x)=>a+Number(x.amount||0),0);
-  const sumExpense = tx.filter(x=>x.type==="expense").reduce((a,x)=>a+Number(x.amount||0),0);
-  const balance = sumIncome - sumExpense;
-
-  const min = Number(SETTINGS.motivationMin || 150000);
-  const max = Number(SETTINGS.motivationMax || 0);
-
-  $("motMinLabel").textContent = `Стабильность · ${fmtMoney(min)}`;
-  $("motMaxLabel").textContent = `Цель 2026 · ${fmtMoney(max)}`;
-
-  let pct = 0;
-  if (max > min) pct = clamp01((balance - min) / (max - min));
-  else if (min > 0) pct = clamp01(balance / min);
-
-  $("motFill").style.width = (pct * 100).toFixed(1) + "%";
-}
-
+        document.querySelectorAll("[data-goal-del]").forEach(btn=>{
+          btn.onclick = async ()=>{
+            const name = btn.dataset.goalDel;
+            const ok = confirm(`Удалить цель?\n\n${name}`);
+            if (!ok) return;
+            await deleteGoal(name);
+          };
+        });
       }
 
-    
+      renderMotivation();
+    }
 
-      // Motivation chart
+    function collectGoalPatch(originalName){
+      const patch = {};
+      const inputs = document.querySelectorAll(`[data-goal="${CSS.escape(originalName)}"]`);
+      inputs.forEach(inp=>{
+        const field = inp.dataset.field;
+        if (!field) return;
+        if (field === "amount" || field === "saved") patch[field] = Number(inp.value || 0);
+        else patch[field] = inp.value || "";
+      });
+      return patch;
+    }
+
+    async function addGoalPrompt(){
+      const name = prompt("Название цели (уникальное):", "Новая цель");
+      if (!name) return;
+
+      const amount = Number(prompt("Сумма цели (₽):", "100000") || 0);
+      if (!amount || !Number.isFinite(amount)) return;
+
+      const due = prompt("Срок (YYYY-MM-DD, можно пусто):", "") || "";
+      const start = prompt("Старт (YYYY-MM-DD, можно пусто):", "") || "";
+      const saved = Number(prompt("Уже накоплено (₽):", "0") || 0);
+      const priority = prompt("Приоритет (например A/B/C):", "B") || "";
+
+      toastShow("warn","Цели","Добавляю цель…");
+      try{
+        await apiPost("addGoal", { name, amount, due, start, saved, priority });
+        await syncGoalsOnly();
+        toastShow("ok","Добавлено","Цель создана.");
+        setTimeout(toastHide, 1200);
+      }catch(err){
+        toastShow("bad","Ошибка", String(err.message || err));
+      }
+    }
+
+    async function updateGoal(originalName, patch){
+      toastShow("warn","Цели","Сохраняю изменения…");
+      try{
+        await apiPost("updateGoal", { originalName, patch });
+        await syncGoalsOnly();
+        toastShow("ok","Сохранено","Цель обновлена.");
+        setTimeout(toastHide, 1200);
+      }catch(err){
+        toastShow("bad","Ошибка", String(err.message || err));
+      }
+    }
+
+    async function deleteGoal(name){
+      toastShow("warn","Цели","Удаляю цель…");
+      try{
+        await apiPost("deleteGoal", { name });
+        await syncGoalsOnly();
+        toastShow("ok","Удалено","Цель удалена.");
+        setTimeout(toastHide, 1200);
+      }catch(err){
+        toastShow("bad","Ошибка", String(err.message || err));
+      }
+    }
+
+    function renderMotivation(){
       const from = $("fromDate").value || SETTINGS.defaultFrom || monthStartISO();
       const to = $("toDate").value || SETTINGS.defaultTo || todayISO();
       const f = parseDateISO(from);
       const t = parseDateISO(to);
-      const tx = ALL_TX.map(x=>({ ...x, _d: parseDateISO(x.date) })).filter(x=>x._d>=f && x._d<=t);
 
+      const tx = ALL_TX.map(x=>({ ...x, _d: parseDateISO(x.date) })).filter(x=>x._d>=f && x._d<=t);
       const sumIncome = tx.filter(x=>x.type==="income").reduce((a,x)=>a+Number(x.amount||0),0);
       const sumExpense = tx.filter(x=>x.type==="expense").reduce((a,x)=>a+Number(x.amount||0),0);
       const balance = sumIncome - sumExpense;
 
       const min = Number(SETTINGS.motivationMin || 150000);
       const max = Number(SETTINGS.motivationMax || 0);
+
       $("motMinLabel").textContent = `Стабильность · ${fmtMoney(min)}`;
       $("motMaxLabel").textContent = `Цель 2026 · ${fmtMoney(max)}`;
 
       let pct = 0;
-      if (max > min){
-        pct = clamp01((balance - min) / (max - min));
-      } else if (min > 0){
-        pct = clamp01(balance / min);
-      }
+      if (max > min) pct = clamp01((balance - min) / (max - min));
+      else if (min > 0) pct = clamp01(balance / min);
+
       $("motFill").style.width = (pct * 100).toFixed(1) + "%";
     }
 
@@ -1074,7 +991,6 @@ function renderMotivation(){
       $("setDefaultFrom").value = SETTINGS.defaultFrom || "";
       $("setDefaultTo").value = SETTINGS.defaultTo || "";
 
-      // categories editor
       const root = $("catsEditor");
       root.innerHTML = "";
       if (!CATEGORIES.length){
@@ -1109,7 +1025,6 @@ function renderMotivation(){
         });
       }
 
-      // limits editor
       const lroot = $("limitsEditor");
       lroot.innerHTML = "";
       if (!LIMITS.length){
@@ -1144,7 +1059,6 @@ function renderMotivation(){
         });
       }
 
-      // bind changes
       document.querySelectorAll("[data-cat-idx]").forEach(inp=>{
         inp.onchange = inp.oninput = ()=>{
           const idx = Number(inp.dataset.catIdx);
@@ -1180,19 +1094,9 @@ function renderMotivation(){
       });
     }
 
-    function escapeAttr(s){
-      return String(s ?? "").replaceAll('"',"&quot;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-    }
-
     /***********************
      * ACTIONS
      ***********************/
-    async function syncAll(){
-      toastShow("warn","Синхронизация","Получаю данные из Google Sheets…");
-      try{
-        const from = $("fromDate").value || SETTINGS.defaultFrom || "2025-01-01";
-        const to = $("toDate").value || SETTINGS.defaultTo || "2026-12-31";
-
     async function syncGoalsOnly(){
       const goalsResp = await apiGet("getGoals");
       GOALS = (goalsResp.items || goalsResp.data?.items || []);
@@ -1200,10 +1104,15 @@ function renderMotivation(){
       renderGoals();
     }
 
+    async function syncAll(){
+      toastShow("warn","Синхронизация","Получаю данные из Google Sheets…");
+      try{
+        const from = $("fromDate").value || SETTINGS.defaultFrom || "2025-01-01";
+        const to = $("toDate").value || SETTINGS.defaultTo || "2026-12-31";
+
         const txResp = await apiGet("listTransactions", { from, to });
         ALL_TX = (txResp.items || txResp.data?.items || []);
 
-        // подтянем цели/категории/лимиты/настройки
         const goalsResp = await apiGet("getGoals");
         GOALS = (goalsResp.items || goalsResp.data?.items || []);
 
@@ -1213,7 +1122,7 @@ function renderMotivation(){
           CATEGORIES = cfg.categories || CATEGORIES;
           LIMITS = cfg.limits || LIMITS;
         }catch(e){
-          // если getConfig пока не задеплоен — не падаем
+          // если getConfig не задеплоен — игнорируем
         }
 
         saveLocal();
@@ -1230,12 +1139,9 @@ function renderMotivation(){
       toastShow("warn","Удаление","Удаляю операцию…");
       try{
         await apiPost("deleteTransaction", { id });
-
-        // после удаления подтянем заново (или можно локально удалить)
         ALL_TX = ALL_TX.filter(x=>x.id !== id);
         saveLocal();
         renderAll();
-
         toastShow("ok","Удалено","Операция удалена.");
         setTimeout(toastHide, 1200);
       }catch(err){
@@ -1265,7 +1171,6 @@ function renderMotivation(){
     }
 
     async function saveSettingsToSheets(){
-      // читаем поля
       SETTINGS.motivationMin = Number($("setMotMin").value || 150000);
       SETTINGS.motivationMax = Number($("setMotMax").value || 0);
       SETTINGS.defaultFrom = $("setDefaultFrom").value || "";
@@ -1309,18 +1214,15 @@ function renderMotivation(){
     function init(){
       loadLocal();
 
-      // default dates
       $("fromDate").value = SETTINGS.defaultFrom || monthStartISO();
       $("toDate").value = SETTINGS.defaultTo || todayISO();
 
       renderAll();
 
-      // nav
       document.querySelectorAll(".navBtn").forEach(b=>{
         b.onclick = ()=> setPage(b.dataset.page);
       });
 
-      // actions
       $("btnSync").onclick = syncAll;
       $("btnQuickSync").onclick = syncAll;
       $("btnApplyFilter").onclick = ()=> renderAll();
@@ -1328,26 +1230,14 @@ function renderMotivation(){
 
       $("toastClose").onclick = toastHide;
 
-    $("btnGoalAdd").onclick = addGoalPrompt;
-        const name = prompt("Название цели:", "Новая цель");
-        if (!name) return;
-        const amount = Number(prompt("Сумма цели (₽):", "100000") || 0);
-        const due = prompt("Срок (YYYY-MM-DD, можно пусто):", "") || "";
-        const saved = Number(prompt("Уже накоплено (₽):", "0") || 0);
-        const priority = prompt("Приоритет (например A/B/C):", "B") || "";
-
-        GOALS.push({ name, amount, due, start:"", saved, priority });
-        saveLocal();
-        renderGoals();
-        toastShow("warn","Важно","Цели сохраняются в Sheets через синхронизацию GAS (в этом пакете — через getGoals/updateGoalSaved). Если хочешь CRUD целей — скажи, добавлю эндпоинты addGoal/deleteGoal/updateGoal.");
-        setTimeout(toastHide, 2200);
-      };
+      $("btnGoalAdd").onclick = addGoalPrompt;
 
       $("btnAddCategory").onclick = ()=>{
         CATEGORIES.push({ type:"expense", category:"", subcategory:"" });
         saveLocal();
         renderSettingsEditors();
       };
+
       $("btnAddLimit").onclick = ()=>{
         LIMITS.push({ type:"expense", category:"", limit:0, period:"month" });
         saveLocal();
@@ -1357,7 +1247,6 @@ function renderMotivation(){
       $("btnSaveSettings").onclick = saveSettingsToSheets;
       $("btnRunTests").onclick = runTests;
 
-      // start on pult
       setPage("pult");
     }
 
