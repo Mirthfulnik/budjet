@@ -30,9 +30,6 @@
       display:grid; gap:12px;
       grid-template-columns: 1fr;
     }
-    .wrap{
-  padding-bottom: calc(var(--navH) + var(--safeB) + 24px);
-}
     @media (max-width: 560px){
   .grid{ gap:14px; }
   .card{ padding: 14px; }
@@ -42,6 +39,11 @@
       .grid.cols3{grid-template-columns: 1fr 1fr 1fr;}
       .grid.cols2wide{grid-template-columns: 1.6fr .4fr;}
     }
+    /* === Mobile layout fix: no 2-column rows on narrow screens === */
+@media (max-width: 560px){
+  .row{ gap:12px; }
+  .row > *{ flex: 1 1 100%; min-width: 0; }
+}
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
       border:1px solid rgba(255,255,255,.06);
@@ -211,7 +213,7 @@
       left: 12px; right: 12px;
       bottom: calc(var(--navH) + 34px + var(--safeB));
       max-width: 1100px;
-      margin: 4000 auto;
+      margin: 0 auto;
       background: rgba(23,26,34,.92);
       border: 1px solid rgba(255,255,255,.10);
       border-radius: 16px;
@@ -2039,23 +2041,18 @@ function escAttr(s){ return esc(s).replaceAll("\n"," "); }
     }, 120);
   });
 
-  // if API_URL not set, show guidance
-  if (!API_URL || API_URL.includes("PASTE_YOUR_GAS_WEBAPP_URL_HERE")){
-    toast(
-      "Настрой API_URL",
-      "Вставь ссылку Web App Google Apps Script в константу API_URL (внизу файла). После этого нажми «Синхр.»",
-      "warn",
-      0
-    );
-  } else {
-    syncAll("init");
-  }
-})();
-  /* === Mobile layout fix: no 2-column rows on narrow screens === */
-@media (max-width: 560px){
-  .row{ gap:12px; }
-  .row > *{ flex: 1 1 100%; min-width: 0; }
+if (!API_URL || API_URL.includes("PASTE_YOUR_GAS_WEBAPP_URL_HERE")){
+  toast(
+    "Настрой API_URL",
+    "Вставь ссылку Web App Google Apps Script в константу API_URL (внизу файла). После этого нажми «Синхр.»",
+    "warn",
+    4500
+  );
+} else {
+  syncAll("init");
 }
+
+})();
 </script>
 </body>
 </html>
