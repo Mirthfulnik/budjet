@@ -523,6 +523,20 @@
           </div>
         </div>
 
+
+
+        <div class="card">
+          <div class="cardTitle">
+            <h2>Счета</h2>
+            <button class="btn inline small" id="btn-new-acc">+ Счёт</button>
+          </div>
+          <div id="accounts-list" class="list"></div>
+          <div class="hint" style="margin-top:10px">
+            «Счета» — это откуда/куда идут деньги (карта, наличные, вклад и т. п.). Список хранится в Google Таблице, но настраивается здесь.
+          </div>
+        </div>
+
+
         <div class="card">
           <div class="cardTitle">
             <h2>Лимиты</h2>
@@ -1730,6 +1744,25 @@ function renderSettings(){
     </div>
   `).join("") : `<div class="muted">Категорий пока нет. Добавь первую.</div>`;
 
+
+  // accounts list
+  const accs = [...state.accounts].sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+  const accHint = accs.length ? accs.map(a=>`
+    <div class="item">
+      <div class="left">
+        <div class="t">${esc(a.name)} <span class="tag">${esc(a.kind||"")}</span></div>
+        <div class="d">ID: ${esc(String(a.id))}</div>
+      </div>
+      <div class="right">
+        <button class="btn inline small ghost" onclick="openAccountEditor('${esc(a.id)}')">Изм.</button>
+        <button class="btn inline small danger" onclick="deleteAccountConfirm('${esc(a.id)}')">✕</button>
+      </div>
+    </div>
+  `).join("") : `<div class="muted">Счетов пока нет. Добавь первый (например «Карта», «Наличные»).</div>`;
+  const accEl = $("#accounts-list");
+  if (accEl) accEl.innerHTML = accHint;
+
+
   // limits settings list for current month
   const month = yyyymm(new Date());
   const lms = state.limits.filter(l=>String(l.month)===String(month));
@@ -1785,6 +1818,7 @@ function renderSettings(){
 }
 
 $("#btn-new-cat").addEventListener("click", ()=>openCategoryEditor(null));
+$("#btn-new-acc").addEventListener("click", ()=>openAccountEditor(null));
 $("#btn-new-limit").addEventListener("click", ()=>openLimitEditor({id:null, categoryId:"", month: yyyymm(new Date()), amount:""}, "Новый лимит"));
 $("#btn-new-stage").addEventListener("click", ()=>openStageEditor(null));
 $("#btn-new-quote").addEventListener("click", ()=>openQuoteEditor(null));
@@ -1854,6 +1888,92 @@ function deleteCategoryConfirm(id){
     }
   }, {once:true});
 }
+
+
+function openAccountEditor(id){
+  const a = id ? state.accounts.find(x=>String(x.id)===String(id)) : null;
+  const html = `
+    <div class="field">
+      <label>Название счёта</label>
+      <input id="a-name" value="${escAttr(a?.name||"")}" placeholder="Например: Карта, Наличные, Вклад" />
+    </div>
+    <div class="field">
+      <label>Тип (необязательно)</label>
+      <select id="a-kind">
+        <option value="" ${!a?.kind?"selected":""}>—</option>
+        <option value="card" ${a?.kind==="card"?"selected":""}>Карта</option>
+        <option value="cash" ${a?.kind==="cash"?"selected":""}>Наличные</option>
+        <option value="bank" ${a?.kind==="bank"?"selected":""}>Банк/Вклад</option>
+        <option value="other" ${a?.kind==="other"?"selected":""}>Другое</option>
+      </select>
+    </div>
+    <div class="row">
+      <button class="btn" id="a-save">Сохранить</button>
+      <button class="btn secondary" id="a-cancel">Отмена</button>
+    </div>
+    <div class="hint" style="margin-top:10px">
+      Счета хранятся в Google Таблице. После сохранения они появятся в выборе «Счёт» при добавлении операции.
+    </div>
+  `;
+  openModal(a ? "Редактировать счёт" : "Новый счёт", html);
+  $("#a-cancel").addEventListener("click", closeModal, {once:true});
+  $("#a-save").addEventListener("click", async ()=>{
+    const name = $("#a-name").value.trim();
+    const kind = $("#a-kind").value || "";
+    if (!name){ toast("Укажи название счёта"); return; }
+    try{
+      const res = await apiPost("upsertAccount", { id: a?.id || "", name, kind });
+      // update local state from response if provided, else re-sync
+      if (res?.account){
+        const idx = state.accounts.findIndex(x=>String(x.id)===String(res.account.id));
+        if (idx >= 0) state.accounts[idx] = res.account; else state.accounts.push(res.account);
+      } else {
+        await syncAll();
+      }
+      closeModal();
+      renderSettings();
+      renderSelects();
+      toast("Счёт сохранён");
+    }catch(err){
+      showStatus("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+
+function deleteAccountConfirm(id){
+  const a = state.accounts.find(x=>String(x.id)===String(id));
+  if (!a){ toast("Счёт не найден"); return; }
+  // Prevent deleting account used in operations/goals (soft check)
+  const usedOp = state.operations.some(o=>String(o.accountId)===String(id));
+  const usedGoal = state.goals.some(g=>String(g.accountId)===String(id));
+  const warn = (usedOp || usedGoal) ? `<div class="hint" style="margin-top:8px">Этот счёт используется в данных. Лучше сначала перенести операции/цели на другой счёт.</div>` : "";
+  const html = `
+    <div class="muted" style="margin-bottom:12px">
+      Удалить счёт <b>${esc(a.name)}</b>?
+    </div>
+    ${warn}
+    <div class="row" style="margin-top:12px">
+      <button class="btn danger" id="a-del">Удалить</button>
+      <button class="btn secondary" id="a-cancel2">Отмена</button>
+    </div>
+  `;
+  openModal("Удаление счёта", html);
+  $("#a-cancel2").addEventListener("click", closeModal, {once:true});
+  $("#a-del").addEventListener("click", async ()=>{
+    try{
+      await apiPost("deleteAccount", { id });
+      state.accounts = state.accounts.filter(x=>String(x.id)!==String(id));
+      // if selected in form - reset select will happen in renderSelects
+      closeModal();
+      renderSettings();
+      renderSelects();
+      toast("Счёт удалён");
+    }catch(err){
+      showStatus("Ошибка", String(err.message||err), "error", 0);
+    }
+  }, {once:true});
+}
+
 
 function openLimitEditor(lim, title="Лимит"){
   const month = lim.month || yyyymm(new Date());
