@@ -165,6 +165,23 @@
     .page{display:none}
     .page.active{display:block}
 
+    /* === Spacing between top-level blocks inside each page === */
+.page > .grid,
+.page > .card {
+  margin-bottom: 12px;
+}
+.page > :last-child {
+  margin-bottom: 0;
+}
+
+/* чуть больше воздуха на телефонах */
+@media (max-width: 560px){
+  .page > .grid,
+  .page > .card {
+    margin-bottom: 14px;
+  }
+}
+
     /* bottom nav */
     .nav{
       position: fixed;
