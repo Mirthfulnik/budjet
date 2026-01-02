@@ -16,6 +16,18 @@
       --safeB: env(safe-area-inset-bottom, 0px);
       --safeT: env(safe-area-inset-top, 0px);
     }
+    /* === Space under each page so fixed bottom-nav never overlaps content === */
+    :root{
+      --navGap: 10px;     /* bottom: 10px у .bottomNav */
+      --pageBottomPad: 18px; /* дополнительный комфорт */
+    }
+
+    .page::after{
+      content:"";
+      display:block;
+      height: calc(var(--navH) + var(--navGap) + var(--safeB) + var(--pageBottomPad));
+    }
+
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
